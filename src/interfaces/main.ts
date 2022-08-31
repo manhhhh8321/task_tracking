@@ -44,12 +44,13 @@ export interface ITask {
   taskID: number;
   taskName: string;
   assignee: string;
+  project: IProject;
   status: IStatus;
   type: IType;
   priority: IPriority;
+  start_date: string;
+  end_date: string;
 }
-
-
 
 export interface Users {
   userID: number;
@@ -70,6 +71,7 @@ export interface Admins {
   userID: number;
   username: string;
   password: string;
+  role: string;
 }
 
 // export interface IUserProject {

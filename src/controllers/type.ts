@@ -1,7 +1,7 @@
 import e, { Response, Request, NextFunction } from "express";
 import { IType } from "../interfaces/main";
 
-const typeArray: IType[] = [];
+export const typeArray: IType[] = [];
 
 const createType = async (req: Request, res: Response) => {
   const { name, reqColor } = req.body;

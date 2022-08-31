@@ -1,7 +1,7 @@
 import { IPriority } from "../interfaces/main";
 import { Request, Response } from "express";
 
-const priorArray: IPriority[] = [];
+export const priorArray: IPriority[] = [];
 
 const createPrior = (req: Request, res: Response) => {
   const { name, order } = req.body;

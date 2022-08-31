@@ -25,6 +25,18 @@ export const userData: Users = {
     taskID: 1,
     assignee: "Me",
     taskName: "Doing a",
+    start_date: "11/11/2011",
+    end_date: "12/12/2022",
+    project: {
+      projectID: 1,
+      projectName: "Project A",
+      slug: "project-a",
+      tasks: ["A", "B"],
+      members: ["A", "B"],
+      task_closed: ["A"],
+      start_date: "11/11/2011",
+      end_date: "12/12/2020",
+    },
     type: {
       typeID: 1,
       color: "red",
@@ -52,4 +64,5 @@ export const adminData: Admins = {
   userID: 1,
   username: "admin",
   password: "123",
+  role: "admin"
 };

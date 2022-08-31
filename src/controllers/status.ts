@@ -1,7 +1,7 @@
 import { IStatus } from "../interfaces/main";
 import { Request, Response } from "express";
 
-const statusArray: IStatus[] = [];
+export const statusArray: IStatus[] = [];
 
 const createStatus = (req: Request, res: Response) => {
   const { name, order } = req.body;

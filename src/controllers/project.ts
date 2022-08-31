@@ -2,7 +2,7 @@ import { Response, Request, NextFunction } from "express";
 import { IProject } from "../interfaces/main";
 import slug from "slug";
 
-const projectArray: IProject[] = [];
+export const projectArray: IProject[] = [];
 
 const createProject = async (
   req: Request,

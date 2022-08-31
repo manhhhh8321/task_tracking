@@ -21,8 +21,15 @@ import {
   setVisibleStatus,
   viewAllStatus,
 } from "./controllers/status";
-import { createPrior, editPrior, setVisiblePrior, viewAllPrior } from "./controllers/priority";
-import { adminLogin } from "./controllers/admin_login";
+import {
+  createPrior,
+  editPrior,
+  setVisiblePrior,
+  viewAllPrior,
+} from "./controllers/priority";
+import { adminLogin, testToken } from "./controllers/admin_login";
+import { createTask } from "./controllers/task";
+import { adminAuth } from "./middlewares/auth";
 
 const app: Application = express();
 
@@ -52,10 +59,16 @@ app.patch("/status/:id", setVisibleStatus);
 app.post("/priority", createPrior);
 app.get("/priority", viewAllPrior);
 app.put("/priority/:id", editPrior);
-app.patch("/priority/:id", setVisiblePrior)
+app.patch("/priority/:id", setVisiblePrior);
 
 //Admin route
-app.post("/admin_login", adminLogin)
+app.post("/admin_login", adminLogin);
+
+//Manage tasks
+app.post("/task", createTask);
+
+//Token test
+app.get("/books", adminAuth, testToken);
 
 const PORT = 3000;
 app.listen(PORT, () => {

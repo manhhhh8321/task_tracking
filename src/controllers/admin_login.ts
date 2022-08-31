@@ -1,26 +1,45 @@
 import { adminData } from "../data/auth";
-import { Response, Request } from "express";
+import { Response, Request, NextFunction } from "express";
 import { Admins } from "../interfaces/main";
 
-const addminAccout: Admins[] = [
-  { userID: 1, username: "admin", password: "123" },
+const bcrypt = require("bcrypt");
+const saltRounds = 10;
+
+const passwordStr = "123";
+var jwt = require("jsonwebtoken");
+export const SECRET = "SECRET";
+
+const hash = bcrypt.hashSync(passwordStr, saltRounds);
+
+export const addminAccount: Admins[] = [
+  { userID: 1, username: "admin", password: hash, role: "admin" },
 ];
+
 
 export const adminLogin = function (req: Request, res: Response) {
   const { name, pass } = req.body;
-  const index = addminAccout.findIndex((item) => (item.username = name));
+  const isBycrypted = bcrypt.compareSync(pass, hash);
+  const user = addminAccount.find(
+    (item) => item.username == name && isBycrypted
+  );
 
-  if (index >= 0 && addminAccout[index].password == pass) {
-    if (
-      name == addminAccout[index].username &&
-      pass == addminAccout[index].password
-    ) {
-      res.send("Logged in");
-    }
+  if (user) {
+    const accessToken = jwt.sign(
+      { username: user.username, role: user.role },
+      SECRET
+    );
+
+    res.json({
+      accessToken,
+    });
   } else {
     return res.status(403).json({
       status_code: 0,
       error_msg: "Username or password incorrect",
     });
   }
+};
+
+export const testToken = (req: Request, res: Response, next: NextFunction) => {
+  res.send("Access complete")
 };
