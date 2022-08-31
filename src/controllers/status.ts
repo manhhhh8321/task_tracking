@@ -63,7 +63,7 @@ const setVisibleStatus = (req: Request, res: Response) => {
   let index = statusArray.findIndex((item) => item.statusID == reqID);
 
   if (index >= 0) {
-    statusArray[index].visible = false;
+    statusArray[index].visible = !statusArray[index].visible;
   } else {
     return res.status(403).json({
       status_code: 0,

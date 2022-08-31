@@ -76,7 +76,7 @@ const setVisibleType = (req: Request, res: Response) => {
   const index = typeArray.findIndex((item) => item.typeID == reqID);
 
   if (index >= 0) {
-    typeArray[index].visible = false;
+    typeArray[index].visible = !typeArray[index].visible;
   } else {
     return res.status(403).json({
       status_code: 0,

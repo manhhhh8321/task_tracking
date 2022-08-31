@@ -1,6 +1,9 @@
+const validateDate = require("is-valid-date");
+
 import { Response, Request, NextFunction } from "express";
 import { IProject } from "../interfaces/main";
 import slug from "slug";
+import { userArray } from "./users";
 
 export const projectArray: IProject[] = [];
 
@@ -10,16 +13,8 @@ const createProject = async (
   next: NextFunction
 ) => {
   const { name, start_date, end_date } = req.body;
-  const prs: IProject = {
-    projectID: projectArray.length + 1,
-    projectName: name,
-    slug: slug(name),
-    members: [],
-    tasks: ["A", "B"],
-    task_closed: ["A"],
-    start_date: start_date,
-    end_date: end_date,
-  };
+  const start_date_valid = validateDate(start_date);
+  const end_date_valid = validateDate(end_date);
 
   if (projectArray.length > 0) {
     for (let el of projectArray) {
@@ -30,9 +25,27 @@ const createProject = async (
         });
     }
   }
-  if (req.body) {
+
+  const prs: IProject = {
+    projectID: projectArray.length + 1,
+    projectName: name,
+    slug: slug(name),
+    members: [],
+    tasks: [],
+    task_closed: [],
+    start_date: start_date,
+    end_date: end_date,
+  };
+
+  if (start_date_valid && end_date_valid) {
     projectArray.push(prs);
+  } else {
+    return res.status(403).json({
+      status_code: 0,
+      error_msg: "Date invalid",
+    });
   }
+
   res.send(projectArray);
 };
 
@@ -83,7 +96,7 @@ const deleteProject = (req: Request, res: Response, next: NextFunction) => {
   let index = projectArray.findIndex((item) => item.slug == slugParams);
 
   if (index >= 0) {
-    projectArray.splice(index - 1, 1);
+    projectArray.splice(index, 1);
     res.send(projectArray);
   } else {
     return res.status(403).json({
@@ -93,14 +106,66 @@ const deleteProject = (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-const addMemberToProject = (req: Request, res: Response) => {
-  const slugParams = req.params.slug;
-  const member = req.body.memeberName;
-  for (let el of projectArray) {
-    if (el.slug == slugParams) {
-      el.members.push();
-    }
+export const addMemberToProject = (req: Request, res: Response) => {
+  const { req_username } = req.body;
+  const req_slug = req.params.slug;
+
+  const userIndex = projectArray.findIndex(
+    (item) => item.members == req_username
+  );
+
+  if (userIndex >= 0) {
+    return res.status(403).json({
+      status_code: 0,
+      error_msg: "Member already in project",
+    });
   }
+
+  const userExist = userArray.findIndex(
+    (item) => item.username == req_username
+  );
+  if (userExist < 0) {
+    return res.status(403).json({
+      status_code: 0,
+      error_msg: "Cannot find user",
+    });
+  }
+
+  const projectIndex = projectArray.findIndex((item) => item.slug == req_slug);
+
+  projectArray[projectIndex].members.push(req_username);
+  res.send(`Added user ${req_username} to project ${req_slug}`);
+};
+
+export const removeMember = (req: Request, res: Response) => {
+  const { req_username } = req.body;
+  const req_slug = req.params.slug;
+
+  const userIndex = projectArray.findIndex(
+    (item) => item.members == req_username
+  );
+
+  if (userIndex < 0) {
+    return res.status(403).json({
+      status_code: 0,
+      error_msg: "Member not in project",
+    });
+  }
+
+  const userExist = userArray.findIndex(
+    (item) => item.username == req_username
+  );
+  if (userExist < 0) {
+    return res.status(403).json({
+      status_code: 0,
+      error_msg: "Cannot find user",
+    });
+  }
+
+  const projectIndex = projectArray.findIndex((item) => item.slug == req_slug);
+
+  projectArray[projectIndex].members.splice(userIndex, 1);
+  res.send(`Remove user ${req_username} from project ${req_slug}`);
 };
 
 export { createProject, viewAllProject, editProject, deleteProject };

@@ -8,6 +8,8 @@ import {
   editProject,
   viewAllProject,
   deleteProject,
+  addMemberToProject,
+  removeMember,
 } from "./controllers/project";
 import {
   createType,
@@ -28,8 +30,14 @@ import {
   viewAllPrior,
 } from "./controllers/priority";
 import { adminLogin, testToken } from "./controllers/admin_login";
-import { createTask } from "./controllers/task";
+import {
+  createTask,
+  deleteTask,
+  editTask,
+  viewAllTasks,
+} from "./controllers/task";
 import { adminAuth } from "./middlewares/auth";
+import { createInviteID, createUser, deleteUser, editUser, userLogin, viewAllUser, viewUserDetail } from "./controllers/users";
 
 const app: Application = express();
 
@@ -41,6 +49,8 @@ app.post("/project", createProject);
 app.get("/project", viewAllProject);
 app.put("/project/:slug", editProject);
 app.delete("/project/:slug", deleteProject);
+app.patch("/project/:slug", addMemberToProject);  
+app.patch("/project/:slug/remove", removeMember);
 
 //Manage type
 
@@ -66,6 +76,21 @@ app.post("/admin_login", adminLogin);
 
 //Manage tasks
 app.post("/task", createTask);
+app.put("/task/:id", editTask);
+app.delete("/task/:id", deleteTask);
+app.get("/task", viewAllTasks);
+
+//Manage users
+app.post("/register", createUser);
+app.get("/create-inviteid", createInviteID);
+
+app.get("/user", viewAllUser);
+app.get("/user/:userid", viewUserDetail);
+app.put("/user/:userid", editUser);
+app.delete("/user/:userid", deleteUser);
+
+//User login
+app.post("/login", userLogin);
 
 //Token test
 app.get("/books", adminAuth, testToken);

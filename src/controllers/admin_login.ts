@@ -1,4 +1,4 @@
-import { adminData } from "../data/auth";
+
 import { Response, Request, NextFunction } from "express";
 import { Admins } from "../interfaces/main";
 

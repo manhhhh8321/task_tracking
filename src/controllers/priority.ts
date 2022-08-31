@@ -4,14 +4,8 @@ import { Request, Response } from "express";
 export const priorArray: IPriority[] = [];
 
 const createPrior = (req: Request, res: Response) => {
+  
   const { name, order } = req.body;
-
-  const priors: IPriority = {
-    priorID: priorArray.length + 1,
-    priorName: name,
-    orderNumber: order,
-    visible: true,
-  };
 
   if (priorArray.length > 0) {
     for (let el of priorArray) {
@@ -22,6 +16,15 @@ const createPrior = (req: Request, res: Response) => {
         });
     }
   }
+
+  const priors: IPriority = {
+    priorID: priorArray.length + 1,
+    priorName: name,
+    orderNumber: order,
+    visible: true,
+  };
+
+ 
 
   if (req.body) {
     priorArray.push(priors);
@@ -63,7 +66,7 @@ const setVisiblePrior = (req: Request, res: Response) => {
   const index = priorArray.findIndex((item) => item.priorID == reqID);
 
   if (index >= 0) {
-    priorArray[index].visible = false;
+    priorArray[index].visible =  !priorArray[index].visible;
   } else {
     return res.status(403).json({
       status_code: 0,

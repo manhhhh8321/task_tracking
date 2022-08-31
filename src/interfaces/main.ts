@@ -64,7 +64,7 @@ export interface Users {
   defaultProject: string;
   allProjects: string[];
   project: IProject;
-  task: ITask;
+  task: string[];
 }
 
 export interface Admins {
