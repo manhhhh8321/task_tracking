@@ -37,7 +37,21 @@ import {
   viewAllTasks,
 } from "./controllers/task";
 import { adminAuth } from "./middlewares/auth";
-import { createInviteID, createUser, deleteUser, editUser, userLogin, viewAllUser, viewUserDetail } from "./controllers/users";
+import {
+  allTaskOfUserProject,
+  createInviteID,
+  createTaskForUser,
+  createUser,
+  deleteUser,
+  editUser,
+  userDeleteTask,
+  userDetailProject,
+  userEditTask,
+  userJoinedProject,
+  userLogin,
+  viewAllUser,
+  viewUserDetail,
+} from "./controllers/users";
 
 const app: Application = express();
 
@@ -49,7 +63,7 @@ app.post("/project", createProject);
 app.get("/project", viewAllProject);
 app.put("/project/:slug", editProject);
 app.delete("/project/:slug", deleteProject);
-app.patch("/project/:slug", addMemberToProject);  
+app.patch("/project/:slug", addMemberToProject);
 app.patch("/project/:slug/remove", removeMember);
 
 //Manage type
@@ -94,6 +108,15 @@ app.post("/login", userLogin);
 
 //Token test
 app.get("/books", adminAuth, testToken);
+
+//Users
+app.get("/joined/:userid", userJoinedProject);
+app.get("/joined/:username/:projectid", userDetailProject);
+app.get("/joined/:username/:projectid/task", allTaskOfUserProject);
+app.post("/joined/:username/:projectid/task", createTaskForUser);
+app.put("/joined/:username/:projectid/task", userEditTask);
+app.delete("/joined/:username/:projectid/task/:taskid", userDeleteTask);
+app.get("/:userid/task");
 
 const PORT = 3000;
 app.listen(PORT, () => {

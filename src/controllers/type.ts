@@ -14,17 +14,22 @@ const createType = async (req: Request, res: Response) => {
     visible: true,
   };
 
-  if (typeArray.length > 0) {
-    for (let el of typeArray) {
-      if (el.typeName == name)
-        return res.status(403).json({
-          status_code: 0,
-          error_msg: "Type name existed",
-        });
-    }
+  const index = typeArray.findIndex(item => item.typeName == name);
+
+  if (index >= 0) {
+    return res.status(403).json({
+      status_code: 0,
+      error_msg: "Type name existed",
+    });
   }
+
   if (req.body) {
     typeArray.push(types);
+  } else {
+    return res.status(403).json({
+      status_code: 0,
+      error_msg: "Invalid info",
+    });
   }
 
   for (let el of typeArray) {

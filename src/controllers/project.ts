@@ -16,14 +16,13 @@ const createProject = async (
   const start_date_valid = validateDate(start_date);
   const end_date_valid = validateDate(end_date);
 
-  if (projectArray.length > 0) {
-    for (let el of projectArray) {
-      if (el.slug == slug(name))
-        return res.status(403).json({
-          status_code: 0,
-          error_msg: "Project name existed",
-        });
-    }
+  const index = projectArray.findIndex(item => item.slug == slug(name));
+
+  if (index >= 0) {
+    return res.status(403).json({
+      status_code: 0,
+      error_msg: "Project name existed",
+    });
   }
 
   const prs: IProject = {
@@ -132,8 +131,10 @@ export const addMemberToProject = (req: Request, res: Response) => {
   }
 
   const projectIndex = projectArray.findIndex((item) => item.slug == req_slug);
+  const index = userArray.findIndex(item => item.username == req_username);
 
   projectArray[projectIndex].members.push(req_username);
+  userArray[index].allProjects.push(projectArray[projectIndex].projectName);
   res.send(`Added user ${req_username} to project ${req_slug}`);
 };
 

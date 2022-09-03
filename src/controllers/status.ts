@@ -14,14 +14,13 @@ const createStatus = (req: Request, res: Response) => {
     visible: true,
   };
 
-  if (statusArray.length > 0) {
-    for (let el of statusArray) {
-      if (el.statusName == name)
-        return res.status(403).json({
-          status_code: 0,
-          error_msg: "Status name existed",
-        });
-    }
+  const index = statusArray.findIndex(item => item.statusName == name);
+
+  if (index >= 0) {
+    return res.status(403).json({
+      status_code: 0,
+      error_msg: "Status name existed",
+    });
   }
 
   if (req.body) {

@@ -19,6 +19,7 @@ export const addminAccount: Admins[] = [
 export const adminLogin = function (req: Request, res: Response) {
   const { name, pass } = req.body;
   const isBycrypted = bcrypt.compareSync(pass, hash);
+  
   const user = addminAccount.find(
     (item) => item.username == name && isBycrypted
   );
