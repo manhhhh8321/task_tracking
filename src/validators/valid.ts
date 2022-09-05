@@ -18,7 +18,7 @@ export const isValidType = (name: any, reqColor: any) => {
 
 export const isValidStatus = (name: any, order: any) => {
   const isValidName = validator.isNumeric(name);
-  const isValidOrder = validator.isInt(order, { min: 1 });
+  const isValidOrder = validator.isInt(order, { min: 1, max: undefined });
 
   if (!isValidName && isValidOrder) return true;
   return false;
@@ -38,10 +38,10 @@ export const isValidTask = (
   const isValidAssignee = validator.isNumeric(assignee);
   const isValidStartDate = validator.isNumeric(req_start_date);
   const isValidEndDate = validator.isNumeric(req_end_date);
-  const isValidProjectID = validator.isNumeric(req_project_id);
-  const isValidPriorID = validator.isNumeric(req_prior_id);
-  const isValidStatusID = validator.isNumeric(req_status_id);
-  const isValidTypeID = validator.isNumeric(req_type_id);
+  const isValidProjectID = validator.isInt(req_project_id, {min: 1, max: undefined});
+  const isValidPriorID = validator.isInt(req_prior_id, {min: 1, max: undefined});
+  const isValidStatusID = validator.isInt(req_status_id, {min: 1, max: undefined});
+  const isValidTypeID = validator.isInt(req_type_id, {min: 1, max: undefined});
 
   if (
     !isValidName &&

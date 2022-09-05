@@ -98,7 +98,7 @@ const setVisibleType = (req: Request, res: Response) => {
   const reqID = (req.params.id);
   
 
-  if(!validator.isNumeric(reqID)) {
+  if(!validator.isInt(reqID, {min: 0, max: undefined})) {
     return res.status(403).json({
       status_code: 0,
       error_msg: "Numeric type invalid",

@@ -24,7 +24,7 @@ export const userJoinedProject = (req: Request, res: Response) => {
   const userid = parseInt(req.params.userid);
   const userIndex = userArray.findIndex((item) => item.userID == userid);
 
-  if (!validator.isNumeric(userid)) {
+  if (!validator.isInt(userid, {min: 0, max: undefined})) {
     return res.status(403).json({
       status_code: 0,
       error_msg: "Request id invalid",
@@ -47,7 +47,7 @@ export const userDetailProject = (req: Request, res: Response) => {
   const username = req.params.username;
   const projectid = (req.params.projectid);
 
-  if (!validator.isNumeric(projectid) || validator.isNumeric(username)) {
+  if (!validator.isInt(projectid, {min: 0, max: undefined}) || validator.isNumeric(username)) {
     return res.status(403).json({
       status_code: 0,
       error_msg: "Request id or name invalid",
@@ -93,7 +93,7 @@ export const allTaskOfUserProject = (req: Request, res: Response) => {
     item.members.includes(username)
   );
 
-  if (!validator.isNumeric(projectid) || validator.isNumeric(username)) {
+  if (!validator.isInt(projectid, {min: 0, max: undefined}) || validator.isNumeric(username)) {
     return res.status(403).json({
       status_code: 0,
       error_msg: "Request id or name invalid",
@@ -134,7 +134,7 @@ export const createTaskForUser = (req: Request, res: Response) => {
   const req_project_id = req.params.projectid;
   const username = req.params.username;
 
-  if (!validator.isNumeric(req_project_id) || validator.isNumeric(username)) {
+  if (!validator.isInt(req_project_id, {min: 0, max: undefined}) || validator.isNumeric(username)) {
     return res.status(403).json({
       status_code: 0,
       error_msg: "Request id or name invalid",
@@ -237,7 +237,7 @@ export const userEditTask = (req: Request, res: Response) => {
   const username = req.params.username;
   const taskid = parseInt(req.params.taskid);
 
-  if (!validator.isNumeric(projectid) || validator.isNumeric(username) || !validator.isNumeric(taskid)) {
+  if (!validator.isInt(projectid, {min: 0, max: undefined}) || validator.isNumeric(username) || !validator.isNumeric(taskid)) {
     return res.status(403).json({
       status_code: 0,
       error_msg: "Request id or name invalid",

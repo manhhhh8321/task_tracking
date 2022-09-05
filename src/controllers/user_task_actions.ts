@@ -8,7 +8,7 @@ import { statusArray } from "./status";
 import { priorArray } from "./priority";
 import { typeArray } from "./type";
 import { userArray } from "./users";
-import { isValidTask , isValidStatus} from "../validators/valid";
+import { isValidTask, isValidStatus } from "../validators/valid";
 
 export const userCreatePrivateTask = (req: Request, res: Response) => {
   const req_project_id = req.body.projectid;
@@ -42,7 +42,18 @@ export const userCreatePrivateTask = (req: Request, res: Response) => {
     req_type_id,
   } = req.body;
 
-  if (!isValidTask(name, assignee, req_start_date, req_end_date,req_project_id, req_prior_id, req_status_id, req_type_id)) {
+  if (
+    !isValidTask(
+      name,
+      assignee,
+      req_start_date,
+      req_end_date,
+      req_project_id,
+      req_prior_id,
+      req_status_id,
+      req_type_id
+    )
+  ) {
     return res.status(403).json({
       status_code: 0,
       error_msg: "Task input invalid",
@@ -129,7 +140,10 @@ export const userEditPrivateTask = (req: Request, res: Response) => {
   const username = req.params.username;
   const taskid = parseInt(req.params.taskid);
 
-  if (!isValidStatus(username, projectid) || validator.isNumeric(taskid)) {
+  if (
+    !isValidStatus(username, projectid) ||
+    validator.isInt(taskid, { min: 1, max: undefined })
+  ) {
     return res.status(403).json({
       status_code: 0,
       error_msg: "Request id or username invalid",
@@ -169,7 +183,7 @@ export const userEditPrivateTask = (req: Request, res: Response) => {
     (item) => item.typeID == parseInt(req_type_id)
   );
   const projectIndex = projectArray.findIndex(
-    (item) => item.projectID == (projectid)
+    (item) => item.projectID == projectid
   );
   const userIndex = userArray.findIndex((item) => item.username == username);
 
@@ -208,7 +222,7 @@ export const userDeletePrivateTask = (req: Request, res: Response) => {
   const username = req.params.username;
   const taskName = req.body.taskname;
 
-  if (validator.isNumeric(userArray) || validator.isNumeric(taskName)) {
+  if (validator.isNumeric(username) || validator.isNumeric(taskName)) {
     return res.status(403).json({
       status_code: 0,
       error_msg: "Username or taskname incorrect",
@@ -246,16 +260,18 @@ export const userDeletePrivateTask = (req: Request, res: Response) => {
 };
 
 export const allUserTask = (req: Request, res: Response) => {
-  const userid = (req.params.userid);
+  const userid = req.params.userid;
 
-  if (!validator.isNumeric(userid)) {
+  if (!validator.isInt(userid, { min: 1, max: undefined })) {
     return res.status(403).json({
       status_code: 0,
       error_msg: "Request id invalid",
     });
   }
 
-  const userIndex = userArray.findIndex((item) => item.userID == parseInt(userid));
+  const userIndex = userArray.findIndex(
+    (item) => item.userID == parseInt(userid)
+  );
 
   if (userIndex >= 0) {
     res.send(`All tasks: ${userArray[userIndex].task}`);

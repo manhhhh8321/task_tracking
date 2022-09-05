@@ -92,7 +92,7 @@ export const viewUserDetail = (req: Request, res: Response) => {
 export const deleteUser = (req: Request, res: Response) => {
   const userid = req.params.userid;
 
-  if (!validator.isNumeric(userid)) {
+  if (!validator.isInt(userid, {min: 0, max: undefined})) {
     return res.status(403).json({
       status_code: 0,
       error_msg: "Request id invalid",
@@ -125,7 +125,7 @@ export const editUser = (req: Request, res: Response) => {
   const { name, birthday, email, active } = req.body;
 
   if (
-    !validator.isNumeric(userid) ||
+    !validator.isInt(userid, {min: 0, max: undefined}) ||
     validator.isNumeric(name) ||
     !validator.isEmail(email) ||
     !validator.isBoolean(active)
@@ -155,7 +155,7 @@ export const editUser = (req: Request, res: Response) => {
 export const userJoinedProject = (req: Request, res: Response) => {
   const userid = req.params.userid;
 
-  if (!validator.isNumeric(userid)) {
+  if (!validator.isInt(userid, {min: 0, max: undefined})) {
     return res.status(403).json({
       status_code: 0,
       error_msg: "Request id incorrect",
@@ -381,7 +381,7 @@ export const userEditTask = (req: Request, res: Response) => {
   const username = req.params.username;
   const taskid = parseInt(req.params.taskid);
 
-  if (!isValidStatus(username, projectid) || validator.isNumeric(taskid)) {
+  if (!isValidStatus(username, projectid) || validator.isInt(taskid, {min: 0, max: undefined})) {
     return res.status(403).json({
       status_code: 0,
       error_msg: "Request id or username invalid",
@@ -496,7 +496,7 @@ export const userDeleteTask = (req: Request, res: Response) => {
 export const allUserTask = (req: Request, res: Response) => {
   const userid = parseInt(req.params.userid);
 
-  if (!validator.isNumeric(userid)) {
+  if (!validator.isInt(userid, {min: 0, max: undefined})) {
     return res.status(403).json({
       status_code: 0,
       error_msg: "Request id invalid",

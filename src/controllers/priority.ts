@@ -54,7 +54,7 @@ const editPrior = (req: Request, res: Response) => {
   const { name, order } = req.body;
   const id = req.params.id;
 
-  if (!isValidStatus(name, order) && !validator.isNumeric(id)) {
+  if (!isValidStatus(name, order) && !validator.isInt(id, {min: 1, max: undefined})) {
     return res.status(403).json({
       status_code: 0,
       error_msg: "Name or order, request id invalid",
@@ -78,7 +78,7 @@ const editPrior = (req: Request, res: Response) => {
 const setVisiblePrior = (req: Request, res: Response) => {
   const reqID = (req.params.id);
 
-  if (!validator.isNumeric(reqID)) {
+  if (!validator.isInt(reqID, {min: 1, max: undefined})) {
     return res.status(403).json({
       status_code: 0,
       error_msg: "Request id invalid",

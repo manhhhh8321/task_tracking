@@ -126,7 +126,7 @@ export const editTask = (req: Request, res: Response) => {
       req_status_id,
       req_type_id
     ) &&
-    !validator.isNumeric(req_task_id)
+    !validator.isInt(req_task_id, {min: 1, max: undefined})
   ) {
     return res.status(403).json({
       status_code: 0,
@@ -178,7 +178,7 @@ export const deleteTask = (req: Request, res: Response) => {
   const req_id = (req.params.id);
   const index = taskArray.findIndex((item) => item.taskID == parseInt(req_id));
 
-  if (!validator.isNumeric(req_id)) {
+  if (!validator.isInt(req_id, {min: 0, max: undefined})) {
     return res.status(403).json({
       status_code: 0,
       error_msg: "Request id invalid",
