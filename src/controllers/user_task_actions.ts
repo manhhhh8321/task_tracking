@@ -220,9 +220,9 @@ export const userEditPrivateTask = (req: Request, res: Response) => {
 
 export const userDeletePrivateTask = (req: Request, res: Response) => {
   const username = req.params.username;
-  const taskName = req.body.taskname;
+  const taskid = req.params.taskid;
 
-  if (validator.isNumeric(username) || validator.isNumeric(taskName)) {
+  if (validator.isNumeric(username) || !validator.isInt(taskid, { min: 1 })) {
     return res.status(403).json({
       status_code: 0,
       error_msg: "Username or taskname incorrect",
@@ -236,7 +236,7 @@ export const userDeletePrivateTask = (req: Request, res: Response) => {
   );
 
   const taskIndex = userArray[userIndex].task.findIndex(
-    (item) => item == taskName
+    (item) => item == taskid
   );
   const taskArrIndex = taskArray.findIndex((item) => item.assignee == username);
 

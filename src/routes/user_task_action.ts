@@ -10,6 +10,6 @@ const userPrivateTaskRouter = express.Router();
 userPrivateTaskRouter.get("/:userid/task", allUserTask);
 userPrivateTaskRouter.post("/:userid/task", userCreatePrivateTask);
 userPrivateTaskRouter.delete("/:username/task", userDeletePrivateTask);
-userPrivateTaskRouter.put("/:userid/:projectid/:taskid", userEditPrivateTask);
+userPrivateTaskRouter.put("/:username/:taskid", userEditPrivateTask);
 
 export { userPrivateTaskRouter };

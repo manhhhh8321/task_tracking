@@ -1,18 +1,18 @@
 const validator = require("validator");
 
 export const isValidProject = (name: any, start_date: any, end_date: any) => {
-  const isValidName = validator.isNumeric(name);
+  const isValidName = validator.isAlpha(name);
   const isValidStartDate = validator.isDate(start_date, "MM-DD-YYYY");
   const isValidEndDate = validator.isDate(end_date, "MM-DD-YYYY");
 
-  if (!isValidName && isValidStartDate && isValidEndDate) return true;
+  if (isValidName && isValidStartDate && isValidEndDate) return true;
   return false;
 };
 
 export const isValidType = (name: any, reqColor: any) => {
-  const isValidName = validator.isNumeric(name);
+  const isValidName = validator.isAlpha(name);
   const isValidColor = validator.isAlpha(reqColor);
-  if (!isValidName && isValidColor) return true;
+  if (isValidName && isValidColor) return true;
   return false;
 };
 
@@ -34,8 +34,8 @@ export const isValidTask = (
   req_status_id: any,
   req_type_id: any
 ) => {
-  const isValidName = validator.isNumeric(name);
-  const isValidAssignee = validator.isNumeric(assignee);
+  const isValidName = validator.isAlpha(name);
+  const isValidAssignee = validator.isAlpha(assignee);
   const isValidStartDate = validator.isNumeric(req_start_date);
   const isValidEndDate = validator.isNumeric(req_end_date);
   const isValidProjectID = validator.isInt(req_project_id, {min: 1, max: undefined});
@@ -44,8 +44,8 @@ export const isValidTask = (
   const isValidTypeID = validator.isInt(req_type_id, {min: 1, max: undefined});
 
   if (
-    !isValidName &&
-    !isValidAssignee &&
+    isValidName &&
+    isValidAssignee &&
     !isValidStartDate &&
     !isValidEndDate &&
     isValidProjectID &&
@@ -66,14 +66,14 @@ export const isValidUser = (
 ) => {
   const isValidUsername = validator.isAlphanumeric(req_username);
   const isValidPassword = validator.isEmpty(req_password);
-  const isValidName = validator.isNumeric(name);
+  const isValidName = validator.isAlpha(name);
   const isValidBirthDay = validator.isDate(birthday, "MM-DD-YYYY");
   const isValidEmail = validator.isEmail(email);
 
   if (
     isValidUsername &&
     !isValidPassword &&
-    !isValidName &&
+    isValidName &&
     isValidBirthDay &&
     isValidEmail
   )
