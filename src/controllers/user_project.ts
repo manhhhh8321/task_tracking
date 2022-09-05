@@ -1,6 +1,6 @@
-const validator = require("validator");
 const uniqid = require("uniqid");
 const validateDate = require("is-valid-date");
+const validator = require("validator")
 
 import { Users } from "../interfaces/main";
 import { Request, Response } from "express";
@@ -9,7 +9,6 @@ import { taskArray } from "./task";
 import { statusArray } from "./status";
 import { priorArray } from "./priority";
 import { typeArray } from "./type";
-import { isValidStatus, isValidTask, isValidUser } from "../validators/valid";
 
 export const userArray: Users[] = [];
 
@@ -21,76 +20,9 @@ export const createInviteID = (req: Request, res: Response) => {
   res.send(newId);
 };
 
-export const createUser = (req: Request, res: Response) => {
-  const { req_username, req_password, req_inviteID, name, birthday, email } =
-    req.body;
-
-  if (!isValidUser(req_username, req_password, name, birthday, email)) {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "User information input invalid",
-    });
-  }
-
-  const index = userArray.findIndex((item) => item.username == req_username);
-
-  if (index >= 0) {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "User already exists",
-    });
-  }
-  const inviteIdIndex = inviteIdList.indexOf(req_inviteID);
-
-  if (inviteIdIndex < 0) {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "InviteID invalid",
-    });
-  }
-
-  const users: Users = {
-    userID: userArray.length + 1,
-    username: req_username,
-    password: req_password,
-    name: name,
-    birthday: birthday,
-    email: email,
-    inviteID: req_inviteID,
-    active: true,
-    defaultProject: projectArray[0].projectName,
-    allProjects: [],
-    project: projectArray[0],
-    task: [],
-  };
-
-  if (userArray.push(users)) {
-    inviteIdList.splice(inviteIdIndex, 1);
-  }
-  res.send(userArray);
-};
-
-export const viewAllUser = (req: Request, res: Response) => {
-  res.send(userArray);
-};
-
-export const viewUserDetail = (req: Request, res: Response) => {
+export const userJoinedProject = (req: Request, res: Response) => {
   const userid = parseInt(req.params.userid);
-
-  if (userArray.length < 0) {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "User not exists",
-    });
-  }
-
   const userIndex = userArray.findIndex((item) => item.userID == userid);
-
-  res.send(`${userArray[userIndex].allProjects}\n${userArray[userIndex].task}`);
-};
-
-export const deleteUser = (req: Request, res: Response) => {
-  const userid = req.params.userid;
 
   if (!validator.isNumeric(userid)) {
     return res.status(403).json({
@@ -98,72 +30,6 @@ export const deleteUser = (req: Request, res: Response) => {
       error_msg: "Request id invalid",
     });
   }
-
-  if (userArray.length < 0) {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "Cannot find any user",
-    });
-  }
-  const userIndex = userArray.findIndex(
-    (item) => item.userID == parseInt(userid)
-  );
-
-  if (userIndex >= 0) {
-    userArray.splice(userIndex, 1);
-  } else {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "Cannot delete user",
-    });
-  }
-  res.send(`Deleted`);
-};
-
-export const editUser = (req: Request, res: Response) => {
-  const userid = parseInt(req.params.userid);
-  const { name, birthday, email, active } = req.body;
-
-  if (
-    !validator.isNumeric(userid) ||
-    validator.isNumeric(name) ||
-    !validator.isEmail(email) ||
-    !validator.isBoolean(active)
-  ) {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "User information input incorrect",
-    });
-  }
-
-  if (userArray.length < 0) {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "Cannot find any user",
-    });
-  }
-
-  const userIndex = userArray.findIndex((item) => item.userID == userid);
-
-  userArray[userIndex].name = name;
-  userArray[userIndex].birthday = birthday;
-  userArray[userIndex].email = email;
-  userArray[userIndex].active = active;
-  res.send(`Updated user ${name}`);
-};
-
-export const userJoinedProject = (req: Request, res: Response) => {
-  const userid = req.params.userid;
-
-  if (!validator.isNumeric(userid)) {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "Request id incorrect",
-    });
-  }
-  const userIndex = userArray.findIndex(
-    (item) => item.userID == parseInt(userid)
-  );
 
   if (userIndex >= 0) {
     res.send(
@@ -179,12 +45,12 @@ export const userJoinedProject = (req: Request, res: Response) => {
 
 export const userDetailProject = (req: Request, res: Response) => {
   const username = req.params.username;
-  const projectid = parseInt(req.params.projectid);
+  const projectid = (req.params.projectid);
 
-  if (!isValidStatus(username, projectid)) {
+  if (!validator.isNumeric(projectid) || validator.isNumeric(username)) {
     return res.status(403).json({
       status_code: 0,
-      error_msg: "Username or request id incorrect",
+      error_msg: "Request id or name invalid",
     });
   }
 
@@ -201,7 +67,7 @@ export const userDetailProject = (req: Request, res: Response) => {
   }
   const userIndex = userArray.findIndex((item) => item.username == username);
   const projectIndex = projectArray.findIndex(
-    (item) => item.projectID == projectid
+    (item) => item.projectID == parseInt(projectid)
   );
 
   if (userIndex >= 0 && projectIndex >= 0) {
@@ -223,16 +89,16 @@ export const allTaskOfUserProject = (req: Request, res: Response) => {
   const username = req.params.username;
   const projectid = req.body.projectid;
 
-  if (!isValidStatus(username, projectid)) {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "Username or request id incorrect",
-    });
-  }
-
   const isUserInProject = projectArray.findIndex((item) =>
     item.members.includes(username)
   );
+
+  if (!validator.isNumeric(projectid) || validator.isNumeric(username)) {
+    return res.status(403).json({
+      status_code: 0,
+      error_msg: "Request id or name invalid",
+    });
+  }
 
   if (isUserInProject < 0) {
     return res.status(403).json({
@@ -265,9 +131,16 @@ export const allTaskOfUserProject = (req: Request, res: Response) => {
 };
 
 export const createTaskForUser = (req: Request, res: Response) => {
-  const req_project_id = parseInt(req.params.projectid);
+  const req_project_id = req.params.projectid;
   const username = req.params.username;
-  const assignee = "Me";
+
+  if (!validator.isNumeric(req_project_id) || validator.isNumeric(username)) {
+    return res.status(403).json({
+      status_code: 0,
+      error_msg: "Request id or name invalid",
+    });
+  }
+
   const isUserInProject = projectArray.findIndex((item) =>
     item.members.includes(username)
   );
@@ -288,23 +161,6 @@ export const createTaskForUser = (req: Request, res: Response) => {
     req_type_id,
   } = req.body;
 
-  if (
-    isValidTask(
-      name,
-      assignee,
-      req_start_date,
-      req_end_date,
-      req_project_id,
-      req_prior_id,
-      req_status_id,
-      req_type_id
-    )
-  ) {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "Task input invalid",
-    });
-  }
   const statusIndex = statusArray.findIndex(
     (item) => item.statusID == parseInt(req_status_id)
   );
@@ -315,7 +171,7 @@ export const createTaskForUser = (req: Request, res: Response) => {
     (item) => item.typeID == parseInt(req_type_id)
   );
   const projectIndex = projectArray.findIndex(
-    (item) => item.projectID == req_project_id
+    (item) => item.projectID == parseInt(req_project_id)
   );
 
   const assigneeIndex = userArray.findIndex(
@@ -332,8 +188,8 @@ export const createTaskForUser = (req: Request, res: Response) => {
   const req_start_date_valid = validateDate(req_start_date);
   const req_end_date_valid = validateDate(req_end_date);
 
-  const start_dateByProjectID = new Date(projectArray[projectIndex].start_date);
-  const end_dateByProjectID = new Date(projectArray[projectIndex].end_date);
+  const start_date_by_projectid = new Date(projectArray[projectIndex].start_date);
+  const end_date_by_projectid = new Date(projectArray[projectIndex].end_date);
 
   if (!req_start_date_valid || !req_end_date_valid) {
     return res.status(403).json({
@@ -377,14 +233,14 @@ export const createTaskForUser = (req: Request, res: Response) => {
 };
 
 export const userEditTask = (req: Request, res: Response) => {
-  const projectid = parseInt(req.params.projectid);
+  const projectid = req.params.projectid;
   const username = req.params.username;
   const taskid = parseInt(req.params.taskid);
 
-  if (!isValidStatus(username, projectid) || validator.isNumeric(taskid)) {
+  if (!validator.isNumeric(projectid) || validator.isNumeric(username) || !validator.isNumeric(taskid)) {
     return res.status(403).json({
       status_code: 0,
-      error_msg: "Request id or username invalid",
+      error_msg: "Request id or name invalid",
     });
   }
 
@@ -422,7 +278,7 @@ export const userEditTask = (req: Request, res: Response) => {
     (item) => item.typeID == parseInt(reqTypeid)
   );
   const projectIndex = projectArray.findIndex(
-    (item) => item.projectID == projectid
+    (item) => item.projectID == parseInt(projectid)
   );
   const userIndex = userArray.findIndex((item) => item.username == username);
 
@@ -460,7 +316,7 @@ export const userDeleteTask = (req: Request, res: Response) => {
   if (validator.isNumeric(username) || validator.isNumeric(taskName)) {
     return res.status(403).json({
       status_code: 0,
-      error_msg: "Name input invalid",
+      error_msg: "Username or task name invalid",
     });
   }
 
@@ -493,24 +349,3 @@ export const userDeleteTask = (req: Request, res: Response) => {
   res.send(`Deleted, user's tasks now remain: ${userArray[userIndex].task}`);
 };
 
-export const allUserTask = (req: Request, res: Response) => {
-  const userid = parseInt(req.params.userid);
-
-  if (!validator.isNumeric(userid)) {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "Request id invalid",
-    });
-  }
-
-  const userIndex = userArray.findIndex((item) => item.userID == userid);
-
-  if (userIndex >= 0) {
-    res.send(`All tasks: ${userArray[userIndex].task}`);
-  } else {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "User not found",
-    });
-  }
-};

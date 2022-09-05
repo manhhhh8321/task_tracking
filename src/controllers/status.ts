@@ -1,5 +1,6 @@
 import { IStatus } from "../interfaces/main";
 import { Request, Response } from "express";
+import { isValidStatus } from "../validators/valid";
 
 export const statusArray: IStatus[] = [];
 
@@ -14,7 +15,14 @@ const createStatus = (req: Request, res: Response) => {
     visible: true,
   };
 
-  const index = statusArray.findIndex(item => item.statusName == name);
+  const index = statusArray.findIndex((item) => item.statusName == name);
+
+  if (!isValidStatus(name, order)) {
+    return res.status(403).json({
+      status_code: 0,
+      error_msg: "Numeric format invalid",
+    });
+  }
 
   if (index >= 0) {
     return res.status(403).json({
@@ -44,6 +52,13 @@ const editStatus = (req: Request, res: Response) => {
   const { name, order } = req.body;
   const id = parseInt(req.params.id);
   const index = statusArray.findIndex((item) => item.statusID == id);
+
+  if (!isValidStatus(name, order)) {
+    return res.status(403).json({
+      status_code: 0,
+      error_msg: "Name or order formart invalid",
+    });
+  }
 
   if (index >= 0) {
     statusArray[index].statusName = name;

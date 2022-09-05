@@ -1,20 +1,31 @@
-import e, { Response, Request, NextFunction } from "express";
+const validator = require("validator");
+
+import { Response, Request, NextFunction } from "express";
 import { IType } from "../interfaces/main";
+import { isValidType } from "../validators/valid";
+
 
 export const typeArray: IType[] = [];
 
 const createType = async (req: Request, res: Response) => {
-  const { name, reqColor } = req.body;
+  const { name, req_color } = req.body;
 
   const types: IType = {
     typeID: typeArray.length + 1,
     defaultColor: "white",
-    color: reqColor,
+    color: req_color,
     typeName: name,
     visible: true,
   };
 
   const index = typeArray.findIndex(item => item.typeName == name);
+
+  if (!isValidType(name, req_color)) {
+    return res.status(403).json({
+      status_code: 0,
+      error_msg: "Name or color invalid",
+    });
+  }
 
   if (index >= 0) {
     return res.status(403).json({
@@ -64,6 +75,13 @@ const editType = (req: Request, res: Response, next: NextFunction) => {
   const id = parseInt(req.params.id);
   let index = typeArray.findIndex((item) => item.typeID == id);
 
+  if (!isValidType(name, reqColor)) {
+    return res.status(403).json({
+      status_code: 0,
+      error_msg: "Name or color invalid",
+    });
+  }
+
   if (index >= 0) {
     typeArray[index].typeName = name;
     typeArray[index].color = reqColor;
@@ -77,9 +95,16 @@ const editType = (req: Request, res: Response, next: NextFunction) => {
 };
 
 const setVisibleType = (req: Request, res: Response) => {
-  const reqID = parseInt(req.params.id);
-  const index = typeArray.findIndex((item) => item.typeID == reqID);
+  const reqID = (req.params.id);
+  
 
+  if(!validator.isNumeric(reqID)) {
+    return res.status(403).json({
+      status_code: 0,
+      error_msg: "Numeric type invalid",
+    });
+  }
+  const index = typeArray.findIndex((item) => item.typeID == parseInt(reqID));
   if (index >= 0) {
     typeArray[index].visible = !typeArray[index].visible;
   } else {

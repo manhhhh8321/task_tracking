@@ -1,5 +1,6 @@
 const validateDate = require("is-valid-date");
 import DateDiff from "date-diff";
+const validator = require("validator");
 
 import { Request, Response } from "express";
 import { ITask } from "../interfaces/main";
@@ -7,8 +8,8 @@ import { statusArray } from "./status";
 import { typeArray } from "./type";
 import { priorArray } from "./priority";
 import { projectArray } from "./project";
-import { Users } from "../interfaces/main";
 import { userArray } from "./users";
+import { isValidTask } from "../validators/valid";
 
 export const taskArray: ITask[] = [];
 
@@ -18,26 +19,46 @@ const createTask = (req: Request, res: Response) => {
     assignee,
     req_start_date,
     req_end_date,
-    reqProjectid,
-    reqPriorid,
-    reqStatusid,
-    reqTypeid,
+    req_project_id,
+    req_prior_id,
+    req_status_id,
+    req_type_id,
   } = req.body;
 
+  if (
+    !isValidTask(
+      name,
+      assignee,
+      req_start_date,
+      req_end_date,
+      req_project_id,
+      req_prior_id,
+      req_status_id,
+      req_type_id
+    )
+  ) {
+    return res.status(403).json({
+      status_code: 0,
+      error_msg: "Task input invalid",
+    });
+  }
+
   const statusIndex = statusArray.findIndex(
-    (item) => item.statusID == parseInt(reqStatusid)
+    (item) => item.statusID == parseInt(req_status_id)
   );
   const priorityIndex = priorArray.findIndex(
-    (item) => item.priorID == parseInt(reqPriorid)
+    (item) => item.priorID == parseInt(req_prior_id)
   );
   const typeIndex = typeArray.findIndex(
-    (item) => item.typeID == parseInt(reqTypeid)
+    (item) => item.typeID == parseInt(req_type_id)
   );
   const projectIndex = projectArray.findIndex(
-    (item) => item.projectID == parseInt(reqProjectid)
+    (item) => item.projectID == parseInt(req_project_id)
   );
 
-  const assigneeIndex = userArray.findIndex(item => item.username == assignee);
+  const assigneeIndex = userArray.findIndex(
+    (item) => item.username == assignee
+  );
 
   if (assigneeIndex < 0) {
     return res.status(403).json({
@@ -46,18 +67,6 @@ const createTask = (req: Request, res: Response) => {
     });
   }
 
-  const req_start_date_valid = validateDate(req_start_date);
-  const req_end_date_valid = validateDate(req_end_date);
-
-  const start_dateByProjectID = new Date(projectArray[projectIndex].start_date);
-  const end_dateByProjectID = new Date(projectArray[projectIndex].end_date);
-
-  if (!req_start_date_valid || !req_end_date_valid) {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "Date invalid",
-    });
-  }
 
   // const diff1 = new DateDiff(start_dateByProjectID, req_start_date);
   // const diff2 = new DateDiff(end_dateByProjectID, req_end_date);
@@ -73,7 +82,7 @@ const createTask = (req: Request, res: Response) => {
     const tasks = {
       taskID: taskArray.length + 1,
       taskName: name,
-      assignee: assignee || "me",
+      assignee: assignee,
       start_date: req_start_date,
       end_date: req_end_date,
       project: projectArray[projectIndex],
@@ -94,32 +103,51 @@ const createTask = (req: Request, res: Response) => {
 };
 
 export const editTask = (req: Request, res: Response) => {
-  const reqTaskID = parseInt(req.params.id);
+  const req_task_id = req.params.id;
   const {
     name,
     assignee,
     req_start_date,
     req_end_date,
-    reqProjectid,
-    reqPriorid,
-    reqStatusid,
-    reqTypeid,
+    req_project_id,
+    req_prior_id,
+    req_status_id,
+    req_type_id,
   } = req.body;
+
+  if (
+    !isValidTask(
+      name,
+      assignee,
+      req_start_date,
+      req_end_date,
+      req_project_id,
+      req_prior_id,
+      req_status_id,
+      req_type_id
+    ) &&
+    !validator.isNumeric(req_task_id)
+  ) {
+    return res.status(403).json({
+      status_code: 0,
+      error_msg: "Task input invalid",
+    });
+  }
 
   const req_start_date_valid = validateDate(req_start_date);
   const req_end_date_valid = validateDate(req_end_date);
 
   const statusIndex = statusArray.findIndex(
-    (item) => item.statusID == parseInt(reqStatusid)
+    (item) => item.statusID == parseInt(req_status_id)
   );
   const priorityIndex = priorArray.findIndex(
-    (item) => item.priorID == parseInt(reqPriorid)
+    (item) => item.priorID == parseInt(req_prior_id)
   );
   const typeIndex = typeArray.findIndex(
-    (item) => item.typeID == parseInt(reqTypeid)
+    (item) => item.typeID == parseInt(req_type_id)
   );
   const projectIndex = projectArray.findIndex(
-    (item) => item.projectID == parseInt(reqProjectid)
+    (item) => item.projectID == parseInt(req_project_id)
   );
 
   if (!req_start_date_valid || !req_end_date_valid) {
@@ -129,7 +157,9 @@ export const editTask = (req: Request, res: Response) => {
     });
   }
 
-  const index = taskArray.findIndex((item) => item.taskID == reqTaskID);
+  const index = taskArray.findIndex(
+    (item) => item.taskID == parseInt(req_task_id)
+  );
 
   if (index >= 0) {
     taskArray[index].taskName = name;
@@ -145,8 +175,15 @@ export const editTask = (req: Request, res: Response) => {
 };
 
 export const deleteTask = (req: Request, res: Response) => {
-  const reqID = parseInt(req.params.id);
-  const index = taskArray.findIndex((item) => item.taskID == reqID);
+  const req_id = (req.params.id);
+  const index = taskArray.findIndex((item) => item.taskID == parseInt(req_id));
+
+  if (!validator.isNumeric(req_id)) {
+    return res.status(403).json({
+      status_code: 0,
+      error_msg: "Request id invalid",
+    });
+  }
 
   if (index >= 0) {
     taskArray.splice(index, 1);
@@ -160,7 +197,6 @@ export const deleteTask = (req: Request, res: Response) => {
 };
 
 export const viewAllTasks = (req: Request, res: Response) => {
-  const viewArray = [];
   const obj: Record<string, any> = {};
   const statusArr = statusArray.map((item) => item.statusName);
 

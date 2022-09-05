@@ -1,9 +1,9 @@
-const validateDate = require("is-valid-date");
 
 import { Response, Request, NextFunction } from "express";
 import { IProject } from "../interfaces/main";
 import slug from "slug";
 import { userArray } from "./users";
+import { isValidProject } from "../validators/valid";
 
 export const projectArray: IProject[] = [];
 
@@ -13,10 +13,8 @@ const createProject = async (
   next: NextFunction
 ) => {
   const { name, start_date, end_date } = req.body;
-  const start_date_valid = validateDate(start_date);
-  const end_date_valid = validateDate(end_date);
 
-  const index = projectArray.findIndex(item => item.slug == slug(name));
+  const index = projectArray.findIndex((item) => item.slug == slug(name));
 
   if (index >= 0) {
     return res.status(403).json({
@@ -36,12 +34,12 @@ const createProject = async (
     end_date: end_date,
   };
 
-  if (start_date_valid && end_date_valid) {
+  if (isValidProject(name, start_date, end_date)) {
     projectArray.push(prs);
   } else {
     return res.status(403).json({
       status_code: 0,
-      error_msg: "Date invalid",
+      error_msg: "Project input invalid",
     });
   }
 
@@ -77,16 +75,25 @@ const editProject = (req: Request, res: Response, next: NextFunction) => {
   const slugParams = req.params.slug;
   const index = projectArray.findIndex((item) => item.slug == slugParams);
 
-  if (index >= 0) {
-    projectArray[index].projectName = name;
-    projectArray[index].start_date = start_date;
-    projectArray[index].end_date = end_date;
+  if (isValidProject(name, start_date, end_date)) {
+    if (index >= 0) {
+      projectArray[index].projectName = name;
+      projectArray[index].start_date = start_date;
+      projectArray[index].end_date = end_date;
+    } else {
+      return res.status(403).json({
+        status_code: 0,
+        error_msg: "Cannot find project name",
+      });
+    }
   } else {
     return res.status(403).json({
       status_code: 0,
-      error_msg: "Cannot find project name",
+      error_msg: "Date fomart invalid",
     });
   }
+
+ 
   res.send(projectArray[index]);
 };
 
@@ -131,7 +138,7 @@ export const addMemberToProject = (req: Request, res: Response) => {
   }
 
   const projectIndex = projectArray.findIndex((item) => item.slug == req_slug);
-  const index = userArray.findIndex(item => item.username == req_username);
+  const index = userArray.findIndex((item) => item.username == req_username);
 
   projectArray[projectIndex].members.push(req_username);
   userArray[index].allProjects.push(projectArray[projectIndex].projectName);
