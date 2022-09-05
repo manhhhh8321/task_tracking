@@ -1,57 +1,16 @@
 import express = require("express");
-import { Application, NextFunction, Request, Response } from "express";
-import { router } from "./routes/admin_login";
+import { Application } from "express";
 import { projectRouter } from "./routes/project";
 import bodyParser from "body-parser";
-import {
-  createProject,
-  editProject,
-  viewAllProject,
-  deleteProject,
-  addMemberToProject,
-  removeMember,
-} from "./controllers/project";
-import {
-  createType,
-  editType,
-  viewAllType,
-  setVisibleType,
-} from "./controllers/type";
-import {
-  createStatus,
-  editStatus,
-  setVisibleStatus,
-  viewAllStatus,
-} from "./controllers/status";
-import {
-  createPrior,
-  editPrior,
-  setVisiblePrior,
-  viewAllPrior,
-} from "./controllers/priority";
-import { adminLogin, testToken } from "./controllers/admin_login";
-import {
-  createTask,
-  deleteTask,
-  editTask,
-  viewAllTasks,
-} from "./controllers/task";
-import { adminAuth } from "./middlewares/auth";
-import {
-  allTaskOfUserProject,
-  createInviteID,
-  createTaskForUser,
-  createUser,
-  deleteUser,
-  editUser,
-  userDeleteTask,
-  userDetailProject,
-  userEditTask,
-  userJoinedProject,
-  userLogin,
-  viewAllUser,
-  viewUserDetail,
-} from "./controllers/users";
+
+import { priorityRouter } from "./routes/priority";
+import { typeRouter } from "./routes/type";
+import { taskRouter } from "./routes/task";
+import { userRouter } from "./routes/user";
+import { statusRouter } from "./routes/status";
+import { userPrivateTaskRouter } from "./routes/user_task_action";
+import { loginRouter } from "./routes/login";
+import { userProjectRouter } from "./routes/user_project";
 
 const app: Application = express();
 
@@ -59,64 +18,23 @@ app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Manage project
-app.post("/project", createProject);
-app.get("/project", viewAllProject);
-app.put("/project/:slug", editProject);
-app.delete("/project/:slug", deleteProject);
-app.patch("/project/:slug", addMemberToProject);
-app.patch("/project/:slug/remove", removeMember);
-
+app.use("/", projectRouter);
 //Manage type
-
-app.post("/type", createType);
-app.put("/type/:id", editType);
-app.get("/type", viewAllType);
-app.patch("/type/:id", setVisibleType);
-
+app.use("/", typeRouter);
 //Manage status
-app.post("/status", createStatus);
-app.get("/status", viewAllStatus);
-app.put("/status/:id", editStatus);
-app.patch("/status/:id", setVisibleStatus);
-
+app.use("/", statusRouter);
 //Manage prior
-app.post("/priority", createPrior);
-app.get("/priority", viewAllPrior);
-app.put("/priority/:id", editPrior);
-app.patch("/priority/:id", setVisiblePrior);
-
-//Admin route
-app.post("/admin_login", adminLogin);
-
+app.use("/", priorityRouter);
 //Manage tasks
-app.post("/task", createTask);
-app.put("/task/:id", editTask);
-app.delete("/task/:id", deleteTask);
-app.get("/task", viewAllTasks);
-
+app.use("/", taskRouter);
 //Manage users
-app.post("/register", createUser);
-app.get("/create-inviteid", createInviteID);
-
-app.get("/user", viewAllUser);
-app.get("/user/:userid", viewUserDetail);
-app.put("/user/:userid", editUser);
-app.delete("/user/:userid", deleteUser);
-
+app.use("/", userRouter);
 //User login
-app.post("/login", userLogin);
-
-//Token test
-app.get("/books", adminAuth, testToken);
-
-//Users
-app.get("/joined/:userid", userJoinedProject);
-app.get("/joined/:username/:projectid", userDetailProject);
-app.get("/joined/:username/:projectid/task", allTaskOfUserProject);
-app.post("/joined/:username/:projectid/task", createTaskForUser);
-app.put("/joined/:username/:projectid/task", userEditTask);
-app.delete("/joined/:username/:projectid/task/:taskid", userDeleteTask);
-app.get("/:userid/task");
+app.use("/", loginRouter);
+//Users_project
+app.use("/", userProjectRouter);
+//User_task_actions
+app.use("/", userPrivateTaskRouter);
 
 const PORT = 3000;
 app.listen(PORT, () => {
