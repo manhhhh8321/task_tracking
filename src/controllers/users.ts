@@ -26,14 +26,7 @@ export const createInviteID = (req: Request, res: Response) => {
 export const createUser = (req: Request, res: Response) => {
   const { req_username, req_password, req_inviteID, name, birthday, email } =
     req.body;
-
-  if (!isValidUser(req_username, req_password, name, birthday, email)) {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "User information input invalid",
-    });
-  }
-
+    
   const hash = bcrypt.hashSync(req_password, saltRounds);
 
   const index = userArray.findIndex((item) => item.username == req_username);

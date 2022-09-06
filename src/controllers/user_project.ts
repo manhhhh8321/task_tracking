@@ -21,15 +21,9 @@ export const createInviteID = (req: Request, res: Response) => {
 };
 
 export const userJoinedProject = (req: Request, res: Response) => {
-  const userid = parseInt(req.params.userid);
-  const userIndex = userArray.findIndex((item) => item.userID == userid);
+  const userid = parseInt(req.params.id);
 
-  if (!validator.isInt(userid, {min: 0, max: undefined})) {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "Request id invalid",
-    });
-  }
+  const userIndex = userArray.findIndex((item) => item.userID == userid);
 
   if (userIndex >= 0) {
     res.send(
@@ -45,14 +39,7 @@ export const userJoinedProject = (req: Request, res: Response) => {
 
 export const userDetailProject = (req: Request, res: Response) => {
   const username = req.params.username;
-  const projectid = (req.params.projectid);
-
-  if (!validator.isInt(projectid, {min: 0, max: undefined}) || validator.isNumeric(username)) {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "Request id or name invalid",
-    });
-  }
+  const projectid = (req.params.id);
 
   const pushArray = [];
   const isUserInProject = projectArray.findIndex((item) =>
@@ -87,18 +74,11 @@ export const userDetailProject = (req: Request, res: Response) => {
 
 export const allTaskOfUserProject = (req: Request, res: Response) => {
   const username = req.params.username;
-  const projectid = req.body.projectid;
+  const projectid = req.body.id;
 
   const isUserInProject = projectArray.findIndex((item) =>
     item.members.includes(username)
   );
-
-  if (!validator.isInt(projectid, {min: 0, max: undefined}) || validator.isNumeric(username)) {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "Request id or name invalid",
-    });
-  }
 
   if (isUserInProject < 0) {
     return res.status(403).json({
@@ -131,15 +111,8 @@ export const allTaskOfUserProject = (req: Request, res: Response) => {
 };
 
 export const createTaskForUser = (req: Request, res: Response) => {
-  const req_project_id = req.params.projectid;
+  const req_project_id = req.params.id;
   const username = req.params.username;
-
-  if (!validator.isInt(req_project_id, {min: 0, max: undefined}) || validator.isNumeric(username)) {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "Request id or name invalid",
-    });
-  }
 
   const isUserInProject = projectArray.findIndex((item) =>
     item.members.includes(username)
@@ -235,14 +208,8 @@ export const createTaskForUser = (req: Request, res: Response) => {
 export const userEditTask = (req: Request, res: Response) => {
   const projectid = req.params.projectid;
   const username = req.params.username;
-  const taskid = parseInt(req.params.taskid);
+  const taskid = parseInt(req.params.task_id);
 
-  if (!validator.isInt(projectid, {min: 0, max: undefined}) || validator.isNumeric(username) || !validator.isNumeric(taskid)) {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "Request id or name invalid",
-    });
-  }
 
   const isUserInProject = projectArray.findIndex((item) =>
     item.members.includes(username)
@@ -312,13 +279,6 @@ export const userEditTask = (req: Request, res: Response) => {
 export const userDeleteTask = (req: Request, res: Response) => {
   const username = req.params.username;
   const taskName = req.body.taskname;
-
-  if (validator.isNumeric(username) || validator.isNumeric(taskName)) {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "Username or task name invalid",
-    });
-  }
 
   const userIndex = userArray.findIndex((item) => item.username == username);
   const isUserInProject = projectArray.findIndex((item) =>

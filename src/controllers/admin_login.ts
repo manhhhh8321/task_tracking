@@ -21,13 +21,6 @@ export const addminAccount: Admins[] = [
 export const userLogin = (req: Request, res: Response, next: NextFunction) => {
   const { uname, upass } = req.body;
 
-  if (validator.isNumeric(uname) || validator.isNumeric(upass)) {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "Request username or password invalid",
-    });
-  }
-
   const userIndex = userArray.findIndex((item) => item.username == uname);
   const adminIndex = addminAccount.findIndex((item) => item.username == uname);
 

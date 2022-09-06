@@ -20,13 +20,6 @@ const createType = async (req: Request, res: Response) => {
 
   const index = typeArray.findIndex(item => item.typeName == name);
 
-  if (!isValidType(name, req_color)) {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "Name or color invalid",
-    });
-  }
-
   if (index >= 0) {
     return res.status(403).json({
       status_code: 0,
@@ -71,20 +64,13 @@ const viewAllType = (req: Request, res: Response) => {
 };
 
 const editType = (req: Request, res: Response, next: NextFunction) => {
-  const { name, reqColor } = req.body;
+  const { name, req_color } = req.body;
   const id = parseInt(req.params.id);
   let index = typeArray.findIndex((item) => item.typeID == id);
 
-  if (!isValidType(name, reqColor)) {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "Name or color invalid",
-    });
-  }
-
   if (index >= 0) {
     typeArray[index].typeName = name;
-    typeArray[index].color = reqColor;
+    typeArray[index].color = req_color;
   } else {
     return res.status(403).json({
       status_code: 0,
@@ -95,16 +81,9 @@ const editType = (req: Request, res: Response, next: NextFunction) => {
 };
 
 const setVisibleType = (req: Request, res: Response) => {
-  const reqID = (req.params.id);
-  
+  const req_id = (req.params.id);
 
-  if(!validator.isInt(reqID, {min: 0, max: undefined})) {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "Numeric type invalid",
-    });
-  }
-  const index = typeArray.findIndex((item) => item.typeID == parseInt(reqID));
+  const index = typeArray.findIndex((item) => item.typeID == parseInt(req_id));
   if (index >= 0) {
     typeArray[index].visible = !typeArray[index].visible;
   } else {
