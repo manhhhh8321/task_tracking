@@ -1,11 +1,11 @@
 const validator = require("validator");
 
 export const isValidProject = (name: any, start_date: any, end_date: any) => {
-  const isValidName = validator.isAlpha(name);
+  const isValidName = validator.isNumeric(name);
   const isValidStartDate = validator.isDate(start_date, "MM-DD-YYYY");
   const isValidEndDate = validator.isDate(end_date, "MM-DD-YYYY");
 
-  if (isValidName && isValidStartDate && isValidEndDate) return true;
+  if (!isValidName && isValidStartDate && isValidEndDate) return true;
   return false;
 };
 
@@ -80,3 +80,10 @@ export const isValidUser = (
     return true;
   return false;
 };
+
+export const isValidLogin = (req_username: any, req_password: any) => {
+  const isValidUsername = validator.isAlphanumeric(req_username);
+  const isValidPassword = validator.isEmpty(req_password);
+  if(isValidUsername && !isValidPassword) return true;
+  return false;
+}

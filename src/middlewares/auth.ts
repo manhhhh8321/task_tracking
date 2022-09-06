@@ -3,6 +3,7 @@ const decode = require("jwt-decode");
 import { Request, Response, NextFunction } from "express";
 const jwt = require("jsonwebtoken");
 import { SECRET } from "../controllers/admin_login";
+import { userArray } from "../controllers/users";
 
 export const adminAuth = async (
   req: Request,
@@ -20,12 +21,14 @@ export const adminAuth = async (
         if (err) {
           return res.sendStatus(403);
         }
-        next();
       });
-      next();
+      return next();
+    }
+    else {
+      return res.sendStatus(403);
     }
   } else {
-    res.sendStatus(401);
+    return res.sendStatus(401);
   }
 };
 
@@ -40,7 +43,13 @@ export const userAuth = async (
     const token = authHeader.split(" ")[1];
     const decoded = decode(token);
 
-    if (decoded.username != "admin") {
+    console.log(decoded);
+
+    const userIndex = userArray.findIndex(
+      (item) => item.username == decoded.username
+    );
+
+    if (userIndex >= 0 && decoded.username == userArray[userIndex].username) {
       jwt.verify(token, SECRET, (err: Error) => {
         if (err) {
           return res.sendStatus(403);
@@ -48,6 +57,8 @@ export const userAuth = async (
         next();
       });
       next();
+    } else {
+      return res.sendStatus(403);
     }
   } else {
     res.sendStatus(401);
