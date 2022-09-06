@@ -10,10 +10,10 @@ import express from "express";
 const userRouter = express.Router();
 
 userRouter.post("/register", createUser);
-userRouter.get("/user", viewAllUser);
-userRouter.get("/user/:userid", viewUserDetail);
-userRouter.put("/user/:userid", editUser);
-userRouter.delete("/user/:userid", deleteUser);
+userRouter.get("/", viewAllUser);
+userRouter.get("/:userid", viewUserDetail);
+userRouter.put("/:userid", editUser);
+userRouter.delete("/:userid", deleteUser);
 userRouter.get("/create-inviteid", createInviteID);
 
 

@@ -7,9 +7,9 @@ import {
 import express from "express";
 const typeRouter = express.Router();
 
-typeRouter.post("/type", createType);
-typeRouter.put("/type/:id", editType);
-typeRouter.get("/type", viewAllType);
-typeRouter.patch("/type/:id", setVisibleType);
+typeRouter.post("/", createType);
+typeRouter.put("/:id", editType);
+typeRouter.get("/", viewAllType);
+typeRouter.patch("/:id", setVisibleType);
 
 export { typeRouter };

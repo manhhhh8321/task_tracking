@@ -5,11 +5,12 @@ import {
   viewAllPrior,
 } from "../controllers/priority";
 import express from "express";
+import { validateNameAndOrder } from "../middlewares/validations";
 const priorityRouter = express.Router();
 
-priorityRouter.post("/priority", createPrior);
-priorityRouter.get("/priority", viewAllPrior);
-priorityRouter.put("/priority/:id", editPrior);
-priorityRouter.patch("/priority/:id", setVisiblePrior);
+priorityRouter.post("/", validateNameAndOrder, createPrior);
+priorityRouter.get("/", viewAllPrior);
+priorityRouter.put("/:id", validateNameAndOrder, editPrior);
+priorityRouter.patch("/:id", setVisiblePrior);
 
-export {priorityRouter};
+export { priorityRouter };

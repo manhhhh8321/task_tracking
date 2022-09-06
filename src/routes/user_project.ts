@@ -9,18 +9,18 @@ import {
 import express from "express";
 const userProjectRouter = express.Router();
 
-userProjectRouter.get("/projects/:userid", userJoinedProject);
-userProjectRouter.get("/projects/:username/:projectid", userDetailProject);
+userProjectRouter.get("/:userid", userJoinedProject);
+userProjectRouter.get("/:username/:projectid", userDetailProject);
 userProjectRouter.get(
-  "/projects/:username/:projectid/task",
+  "/:username/:projectid/task",
   allTaskOfUserProject
 );
 userProjectRouter.post(
-  "/projects/:username/:projectid/task",
+  "/:username/:projectid/task",
   createTaskForUser
 );
-userProjectRouter.put("/projects/:username/:projectid/:taskid", userEditTask);
-userProjectRouter.delete("/projects/:username/task", userDeleteTask);
+userProjectRouter.put("/:username/:projectid/:taskid", userEditTask);
+userProjectRouter.delete("/:username/task", userDeleteTask);
 
 
 export { userProjectRouter };

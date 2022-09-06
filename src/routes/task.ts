@@ -7,9 +7,9 @@ import {
 import express from "express";
 const taskRouter = express.Router();
 
-taskRouter.post("/task", createTask);
-taskRouter.put("/task/:id", editTask);
-taskRouter.delete("/task/:id", deleteTask);
-taskRouter.get("/task", viewAllTasks);
+taskRouter.post("/", createTask);
+taskRouter.put("/:id", editTask);
+taskRouter.delete("/:id", deleteTask);
+taskRouter.get("/", viewAllTasks);
 
 export { taskRouter };
