@@ -7,9 +7,10 @@ import { userArray } from "./users";
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
 
-const passwordStr = "123";
+const passwordStr = "123a";
 var jwt = require("jsonwebtoken");
 export const SECRET = "SECRET";
+export const KEY = "KEY";
 
 const hash = bcrypt.hashSync(passwordStr, saltRounds);
 
@@ -17,7 +18,7 @@ export const addminAccount: Admins[] = [
   { userID: 1, username: "admin", password: hash, role: "admin" },
 ];
 
-export const userLogin = (req: Request, res: Response) => {
+export const userLogin = (req: Request, res: Response, next: NextFunction) => {
   const { uname, upass } = req.body;
 
   if (validator.isNumeric(uname) || validator.isNumeric(upass)) {
@@ -56,10 +57,14 @@ export const userLogin = (req: Request, res: Response) => {
     if (userIndex >= 0) {
       if (
         uname == userArray[userIndex].username &&
-        upass == userArray[userIndex].password &&
+        bcrypt.compareSync(upass, userArray[userIndex].password) &&
         userArray[userIndex].active != false
       ) {
-        return res.send("Logged in");
+        const accessToken = jwt.sign(
+          { username: userArray[userIndex].username },
+          SECRET
+        );
+        return res.send(accessToken);
       } else {
         return res.status(403).json({
           status_code: 0,

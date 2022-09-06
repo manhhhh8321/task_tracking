@@ -1,4 +1,3 @@
-
 import { Response, Request, NextFunction } from "express";
 import { IProject } from "../interfaces/main";
 import slug from "slug";
@@ -34,15 +33,7 @@ const createProject = async (
     end_date: end_date,
   };
 
-  if (isValidProject(name, start_date, end_date)) {
-    projectArray.push(prs);
-  } else {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "Project input invalid",
-    });
-  }
-
+  projectArray.push(prs);
   res.send(projectArray);
 };
 
@@ -75,7 +66,7 @@ const editProject = (req: Request, res: Response, next: NextFunction) => {
   const slugParams = req.params.slug;
   const index = projectArray.findIndex((item) => item.slug == slugParams);
 
-  if (isValidProject(name, start_date, end_date)) {
+  
     if (index >= 0) {
       projectArray[index].projectName = name;
       projectArray[index].start_date = start_date;
@@ -86,14 +77,8 @@ const editProject = (req: Request, res: Response, next: NextFunction) => {
         error_msg: "Cannot find project name",
       });
     }
-  } else {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "Date fomart invalid",
-    });
-  }
+  
 
- 
   res.send(projectArray[index]);
 };
 

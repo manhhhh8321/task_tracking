@@ -9,21 +9,13 @@ export const priorArray: IPriority[] = [];
 const createPrior = (req: Request, res: Response) => {
   const { name, order } = req.body;
 
-  if (!isValidStatus(name, order)) {
+  const priorIndex = priorArray.findIndex(item => item.priorName == name);
+
+  if (priorIndex >= 0) {
     return res.status(403).json({
       status_code: 0,
-      error_msg: "Name or order invalid",
+      error_msg: "Priority existed",
     });
-  }
-
-  if (priorArray.length > 0) {
-    for (let el of priorArray) {
-      if (el.priorName == name)
-        return res.status(403).json({
-          status_code: 0,
-          error_msg: "Prior name existed",
-        });
-    }
   }
 
   const priors: IPriority = {
@@ -53,13 +45,6 @@ const viewAllPrior = (req: Request, res: Response) => {
 const editPrior = (req: Request, res: Response) => {
   const { name, order } = req.body;
   const id = req.params.id;
-
-  if (!isValidStatus(name, order) && !validator.isInt(id, {min: 1, max: undefined})) {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "Name or order, request id invalid",
-    });
-  }
 
   const index = priorArray.findIndex((item) => item.priorID == parseInt(id));
 
