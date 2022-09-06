@@ -1,17 +1,12 @@
 const validator = require("validator");
 const uniqid = require("uniqid");
-const validateDate = require("is-valid-date");
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
 
 import { Users } from "../interfaces/main";
 import { Request, Response } from "express";
 import { projectArray } from "./project";
-import { taskArray } from "./task";
-import { statusArray } from "./status";
-import { priorArray } from "./priority";
-import { typeArray } from "./type";
-import { isValidStatus, isValidTask, isValidUser } from "../validators/valid";
+
 
 export const userArray: Users[] = [];
 
@@ -26,22 +21,20 @@ export const createInviteID = (req: Request, res: Response) => {
 export const createUser = (req: Request, res: Response) => {
   const { req_username, req_password, req_inviteID, name, birthday, email } =
     req.body;
-    
+
   const hash = bcrypt.hashSync(req_password, saltRounds);
 
-  const index = userArray.findIndex((item) => item.username == req_username);
+  const index = userArray.findIndex((item) => item.username === req_username);
 
   if (index >= 0) {
-    return res.status(403).json({
-      status_code: 0,
+    return res.status(409).json({
       error_msg: "User already exists",
     });
   }
   const inviteIdIndex = inviteIdList.indexOf(req_inviteID);
 
   if (inviteIdIndex < 0) {
-    return res.status(403).json({
-      status_code: 0,
+    return res.status(400).json({
       error_msg: "InviteID invalid",
     });
   }
@@ -72,44 +65,41 @@ export const viewAllUser = (req: Request, res: Response) => {
 };
 
 export const viewUserDetail = (req: Request, res: Response) => {
-  const userid = parseInt(req.params.userid);
+  const user_id = parseInt(req.params.userid);
 
   if (userArray.length < 0) {
-    return res.status(403).json({
-      status_code: 0,
+    return res.status(204).json({
       error_msg: "User not exists",
     });
   }
 
-  const userIndex = userArray.findIndex((item) => item.userID == userid);
+  const userIndex = userArray.findIndex((item) => item.userID === user_id);
 
   res.send(`${userArray[userIndex].allProjects}\n${userArray[userIndex].task}`);
 };
 
 export const deleteUser = (req: Request, res: Response) => {
-  const userid = req.params.userid;
+  const user_id = req.params.userid;
 
-  if (!validator.isInt(userid, {min: 0, max: undefined})) {
-    return res.status(403).json({
-      status_code: 0,
+  if (!validator.isInt(user_id, {min: 0, max: undefined})) {
+    return res.status(404).json({
       error_msg: "Request id invalid",
     });
   }
 
   if (userArray.length < 0) {
-    return res.status(403).json({
-      status_code: 0,
+    return res.status(204).json({
       error_msg: "Cannot find any user",
     });
   }
   const userIndex = userArray.findIndex(
-    (item) => item.userID == parseInt(userid)
+    (item) => item.userID === parseInt(user_id)
   );
 
   if (userIndex >= 0) {
     userArray.splice(userIndex, 1);
   } else {
-    return res.status(403).json({
+    return res.status(400).json({
       status_code: 0,
       error_msg: "Cannot delete user",
     });
@@ -118,29 +108,27 @@ export const deleteUser = (req: Request, res: Response) => {
 };
 
 export const editUser = (req: Request, res: Response) => {
-  const userid = parseInt(req.params.userid);
+  const user_id = parseInt(req.params.userid);
   const { name, birthday, email, active } = req.body;
 
   if (
-    !validator.isInt(userid, {min: 0, max: undefined}) ||
+    !validator.isInt(user_id, {min: 0, max: undefined}) ||
     validator.isNumeric(name) ||
     !validator.isEmail(email) ||
     !validator.isBoolean(active)
   ) {
-    return res.status(403).json({
-      status_code: 0,
+    return res.status(400).json({
       error_msg: "User information input incorrect",
     });
   }
 
   if (userArray.length < 0) {
-    return res.status(403).json({
-      status_code: 0,
+    return res.status(404).json({
       error_msg: "Cannot find any user",
     });
   }
 
-  const userIndex = userArray.findIndex((item) => item.userID == userid);
+  const userIndex = userArray.findIndex((item) => item.userID === user_id);
 
   userArray[userIndex].name = name;
   userArray[userIndex].birthday = birthday;

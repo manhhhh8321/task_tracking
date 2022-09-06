@@ -1,6 +1,3 @@
-const validateDate = require("is-valid-date");
-import DateDiff from "date-diff";
-const validator = require("validator");
 
 import { Request, Response } from "express";
 import { ITask } from "../interfaces/main";
@@ -37,46 +34,34 @@ const createTask = (req: Request, res: Response) => {
       req_type_id
     )
   ) {
-    return res.status(403).json({
-      status_code: 0,
+    return res.status(400).json({
       error_msg: "Task input invalid",
     });
   }
 
   const statusIndex = statusArray.findIndex(
-    (item) => item.statusID == parseInt(req_status_id)
+    (item) => item.statusID === parseInt(req_status_id)
   );
   const priorityIndex = priorArray.findIndex(
-    (item) => item.priorID == parseInt(req_prior_id)
+    (item) => item.priorID === parseInt(req_prior_id)
   );
   const typeIndex = typeArray.findIndex(
-    (item) => item.typeID == parseInt(req_type_id)
+    (item) => item.typeID === parseInt(req_type_id)
   );
   const projectIndex = projectArray.findIndex(
-    (item) => item.projectID == parseInt(req_project_id)
+    (item) => item.projectID === parseInt(req_project_id)
   );
 
   const assigneeIndex = userArray.findIndex(
-    (item) => item.username == assignee
+    (item) => item.username === assignee
   );
 
   if (assigneeIndex < 0) {
-    return res.status(403).json({
-      status_code: 0,
+    return res.status(404).json({
       error_msg: "Cannot find user",
     });
   }
 
-
-  // const diff1 = new DateDiff(start_dateByProjectID, req_start_date);
-  // const diff2 = new DateDiff(end_dateByProjectID, req_end_date);
-
-  // if (diff1.days() < 0 || diff2.days() < 0) {
-  //   return res.status(403).json({
-  //     status_code: 0,
-  //     error_msg: "Date invalid",
-  //   });
-  // }
 
   if (projectIndex >= 0) {
     const tasks = {
@@ -94,8 +79,7 @@ const createTask = (req: Request, res: Response) => {
     projectArray[projectIndex].tasks.push(tasks.taskName);
     taskArray.push(tasks);
   } else {
-    return res.status(403).json({
-      status_code: 0,
+    return res.status(400).json({
       error_msg: "Cannot create task",
     });
   }
@@ -115,50 +99,21 @@ export const editTask = (req: Request, res: Response) => {
     req_type_id,
   } = req.body;
 
-  if (
-    !isValidTask(
-      name,
-      assignee,
-      req_start_date,
-      req_end_date,
-      req_project_id,
-      req_prior_id,
-      req_status_id,
-      req_type_id
-    ) &&
-    !validator.isInt(req_task_id, {min: 1, max: undefined})
-  ) {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "Task input invalid",
-    });
-  }
-
-  const req_start_date_valid = validateDate(req_start_date);
-  const req_end_date_valid = validateDate(req_end_date);
-
   const statusIndex = statusArray.findIndex(
-    (item) => item.statusID == parseInt(req_status_id)
+    (item) => item.statusID === parseInt(req_status_id)
   );
   const priorityIndex = priorArray.findIndex(
-    (item) => item.priorID == parseInt(req_prior_id)
+    (item) => item.priorID === parseInt(req_prior_id)
   );
   const typeIndex = typeArray.findIndex(
-    (item) => item.typeID == parseInt(req_type_id)
+    (item) => item.typeID === parseInt(req_type_id)
   );
   const projectIndex = projectArray.findIndex(
-    (item) => item.projectID == parseInt(req_project_id)
+    (item) => item.projectID === parseInt(req_project_id)
   );
 
-  if (!req_start_date_valid || !req_end_date_valid) {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "Date invalid",
-    });
-  }
-
   const index = taskArray.findIndex(
-    (item) => item.taskID == parseInt(req_task_id)
+    (item) => item.taskID === parseInt(req_task_id)
   );
 
   if (index >= 0) {
@@ -176,21 +131,13 @@ export const editTask = (req: Request, res: Response) => {
 
 export const deleteTask = (req: Request, res: Response) => {
   const req_id = (req.params.id);
-  const index = taskArray.findIndex((item) => item.taskID == parseInt(req_id));
-
-  if (!validator.isInt(req_id, {min: 0, max: undefined})) {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "Request id invalid",
-    });
-  }
+  const index = taskArray.findIndex((item) => item.taskID === parseInt(req_id));
 
   if (index >= 0) {
     taskArray.splice(index, 1);
     res.send(taskArray);
   } else {
-    return res.status(403).json({
-      status_code: 0,
+    return res.status(400).json({
       error_msg: "Cannot delete task",
     });
   }
@@ -210,9 +157,8 @@ export const viewAllTasks = (req: Request, res: Response) => {
   }
 
   if (!obj) {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "Something wrong",
+    return res.status(204).json({
+      error_msg: "No content found",
     });
   }
   res.send(obj);

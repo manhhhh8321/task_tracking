@@ -1,4 +1,3 @@
-const validator = require("validator");
 
 import { Response, Request, NextFunction } from "express";
 import { Admins } from "../interfaces/main";
@@ -10,25 +9,24 @@ const saltRounds = 10;
 const passwordStr = "123a";
 var jwt = require("jsonwebtoken");
 export const SECRET = "SECRET";
-export const KEY = "KEY";
 
 const hash = bcrypt.hashSync(passwordStr, saltRounds);
 
-export const addminAccount: Admins[] = [
+export const adminAccount: Admins[] = [
   { userID: 1, username: "admin", password: hash, role: "admin" },
 ];
 
 export const userLogin = (req: Request, res: Response, next: NextFunction) => {
-  const { uname, upass } = req.body;
+  const { uname, upass: upas } = req.body;
 
-  const userIndex = userArray.findIndex((item) => item.username == uname);
-  const adminIndex = addminAccount.findIndex((item) => item.username == uname);
+  const userIndex = userArray.findIndex((item) => item.username === uname);
+  const adminIndex = adminAccount.findIndex((item) => item.username === uname);
 
   if (adminIndex >= 0) {
-    const isBycrypted = bcrypt.compareSync(upass, hash);
+    const isBycrypted = bcrypt.compareSync(upas, hash);
 
-    const user = addminAccount.find(
-      (item) => item.username == uname && isBycrypted
+    const user = adminAccount.find(
+      (item) => item.username === uname && isBycrypted
     );
 
     if (user) {
@@ -41,16 +39,15 @@ export const userLogin = (req: Request, res: Response, next: NextFunction) => {
         accessToken,
       });
     } else {
-      return res.status(403).json({
-        status_code: 0,
+      return res.status(412).json({
         error_msg: "Username or password incorrect",
       });
     }
   } else {
     if (userIndex >= 0) {
       if (
-        uname == userArray[userIndex].username &&
-        bcrypt.compareSync(upass, userArray[userIndex].password) &&
+        uname === userArray[userIndex].username &&
+        bcrypt.compareSync(upas, userArray[userIndex].password) &&
         userArray[userIndex].active != false
       ) {
         const accessToken = jwt.sign(
@@ -59,14 +56,12 @@ export const userLogin = (req: Request, res: Response, next: NextFunction) => {
         );
         return res.send(accessToken);
       } else {
-        return res.status(403).json({
-          status_code: 0,
+        return res.status(412).json({
           error_msg: "Username or password incorrect",
         });
       }
     } else {
-      return res.status(403).json({
-        status_code: 0,
+      return res.status(404).json({
         error_msg: "User not found",
       });
     }

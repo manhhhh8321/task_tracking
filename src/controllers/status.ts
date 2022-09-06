@@ -1,6 +1,5 @@
 import { IStatus } from "../interfaces/main";
 import { Request, Response } from "express";
-import { isValidStatus } from "../validators/valid";
 
 export const statusArray: IStatus[] = [];
 
@@ -15,11 +14,10 @@ const createStatus = (req: Request, res: Response) => {
     visible: true,
   };
 
-  const index = statusArray.findIndex((item) => item.statusName == name);
+  const index = statusArray.findIndex((item) => item.statusName === name);
 
   if (index >= 0) {
-    return res.status(403).json({
-      status_code: 0,
+    return res.status(409).json({
       error_msg: "Status name existed",
     });
   }
@@ -34,8 +32,7 @@ const viewAllStatus = (req: Request, res: Response) => {
   if (statusArray.length > 0) {
     res.json(statusArray);
   } else {
-    return res.status(403).json({
-      status_code: 0,
+    return res.status(204).json({
       error_msg: "No content found",
     });
   }
@@ -44,14 +41,13 @@ const viewAllStatus = (req: Request, res: Response) => {
 const editStatus = (req: Request, res: Response) => {
   const { name, order } = req.body;
   const id = parseInt(req.params.id);
-  const index = statusArray.findIndex((item) => item.statusID == id);
+  const index = statusArray.findIndex((item) => item.statusID === id);
 
   if (index >= 0) {
     statusArray[index].statusName = name;
     statusArray[index].orderNumber = order;
   } else {
-    return res.status(403).json({
-      status_code: 0,
+    return res.status(404).json({
       error_msg: "Cannot find status name",
     });
   }
@@ -60,13 +56,12 @@ const editStatus = (req: Request, res: Response) => {
 
 const setVisibleStatus = (req: Request, res: Response) => {
   const reqID = parseInt(req.params.id);
-  let index = statusArray.findIndex((item) => item.statusID == reqID);
+  let index = statusArray.findIndex((item) => item.statusID === reqID);
 
   if (index >= 0) {
     statusArray[index].visible = !statusArray[index].visible;
   } else {
-    return res.status(403).json({
-      status_code: 0,
+    return res.status(404).json({
       error_msg: "Cannot find status id",
     });
   }
