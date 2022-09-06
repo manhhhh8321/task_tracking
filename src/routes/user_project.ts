@@ -9,14 +9,20 @@ import {
 import express from "express";
 import {
   validateParamId,
-  validateParamsUserNameAndBodyTaskname,
+  validateParamsUserNameAndBodyTaskName,
   validateProjectIdAndTaskId,
+  validateTask,
+  validateUserCreateTask,
   validateUsernameAndParamsId,
 } from "../middlewares/validations";
 const userProjectRouter = express.Router();
 
 userProjectRouter.get("/:id", validateParamId, userJoinedProject);
-userProjectRouter.get("/:username/:id", validateUsernameAndParamsId, userDetailProject);
+userProjectRouter.get(
+  "/:username/:id",
+  validateUsernameAndParamsId,
+  userDetailProject
+);
 userProjectRouter.get(
   "/:username/:id/task",
   validateUsernameAndParamsId,
@@ -25,13 +31,19 @@ userProjectRouter.get(
 userProjectRouter.post(
   "/:username/:id/task",
   validateUsernameAndParamsId,
+  validateUserCreateTask,
   createTaskForUser
 );
 userProjectRouter.put(
-  "/:username/:projectid/:task_id",
+  "/:username/:projectid/:taskid",
   validateProjectIdAndTaskId,
+  validateTask,
   userEditTask
 );
-userProjectRouter.delete("/:username/task", validateParamsUserNameAndBodyTaskname, userDeleteTask);
+userProjectRouter.delete(
+  "/:username/task",
+  validateParamsUserNameAndBodyTaskName,
+  userDeleteTask
+);
 
 export { userProjectRouter };

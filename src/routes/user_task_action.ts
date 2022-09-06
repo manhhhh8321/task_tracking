@@ -7,16 +7,23 @@ import {
 import express from "express";
 import {
   validateParamId,
+  validateTask,
   validateUsernameAndParamsId,
 } from "../middlewares/validations";
 const userPrivateTaskRouter = express.Router();
 
 userPrivateTaskRouter.get("/:id/task", validateParamId, allUserTask);
-userPrivateTaskRouter.post("/:id/task", validateParamId, userCreatePrivateTask);
+userPrivateTaskRouter.post(
+  "/:id/task",
+  validateParamId,
+  validateTask,
+  userCreatePrivateTask
+);
 userPrivateTaskRouter.delete("/:username/task", userDeletePrivateTask);
 userPrivateTaskRouter.put(
   "/:username/:id",
   validateUsernameAndParamsId,
+  validateTask,
   userEditPrivateTask
 );
 
