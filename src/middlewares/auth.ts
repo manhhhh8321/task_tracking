@@ -16,15 +16,14 @@ export const adminAuth = async (
     const token = authHeader.split(" ")[1];
     const decoded = decode(token);
 
-    if (decoded.username == "admin") {
+    if (decoded.username === "admin") {
       jwt.verify(token, SECRET, (err: Error) => {
         if (err) {
           return res.sendStatus(403);
         }
       });
       return next();
-    }
-    else {
+    } else {
       return res.sendStatus(403);
     }
   } else {
@@ -43,18 +42,15 @@ export const userAuth = async (
     const token = authHeader.split(" ")[1];
     const decoded = decode(token);
 
-    console.log(decoded);
-
     const userIndex = userArray.findIndex(
-      (item) => item.username == decoded.username
+      (item) => item.username === decoded.username
     );
 
-    if (userIndex >= 0 && decoded.username == userArray[userIndex].username) {
+    if (userIndex >= 0) {
       jwt.verify(token, SECRET, (err: Error) => {
         if (err) {
           return res.sendStatus(403);
         }
-        next();
       });
       next();
     } else {

@@ -17,7 +17,6 @@ const app: Application = express();
 
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-
 //User login
 app.use("/", loginRouter);
 // Manage project

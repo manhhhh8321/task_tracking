@@ -1,27 +1,35 @@
 const validator = require("validator");
 
+import { error } from "../middlewares/validations";
+
 export const isValidProject = (name: any, start_date: any, end_date: any) => {
   const isValidName = validator.isNumeric(name);
-  const isValidStartDate = validator.isDate(start_date, "MM-DD-YYYY");
-  const isValidEndDate = validator.isDate(end_date, "MM-DD-YYYY");
+  const isValidStartDate = validator.isDate(start_date, "YYYY-MM-DD");
+  const isValidEndDate = validator.isDate(end_date, "YYYY-MM-DD");
 
-  if (!isValidName && isValidStartDate && isValidEndDate) return true;
-  return false;
+  if (isValidName) return error.string_input_err("Name");
+  if (!isValidStartDate || !isValidEndDate) return error.date_input_err;
+
+  const d1 = new Date(start_date);
+  const d2 = new Date(end_date);
+
+  if (d1 > d2) return error.date_range_err;
 };
 
 export const isValidType = (name: any, reqColor: any) => {
   const isValidName = validator.isAlpha(name);
   const isValidColor = validator.isAlpha(reqColor);
-  if (isValidName && isValidColor) return true;
-  return false;
+
+  if (!isValidName) return error.string_input_err("Name");
+  if (!isValidColor) return error.string_input_err("Color");
 };
 
 export const isValidStatus = (name: any, order: any) => {
   const isValidName = validator.isNumeric(name);
   const isValidOrder = validator.isInt(order, { min: 1, max: undefined });
 
-  if (!isValidName && isValidOrder) return true;
-  return false;
+  if (!isValidName) return error.string_input_err("Name");
+  if (!isValidOrder) return error.number_input_err("Order");
 };
 
 export const isValidTask = (
@@ -36,25 +44,37 @@ export const isValidTask = (
 ) => {
   const isValidName = validator.isAlpha(name);
   const isValidAssignee = validator.isAlpha(assignee);
-  const isValidStartDate = validator.isNumeric(req_start_date);
-  const isValidEndDate = validator.isNumeric(req_end_date);
-  const isValidProjectID = validator.isInt(req_project_id, {min: 1, max: undefined});
-  const isValidPriorID = validator.isInt(req_prior_id, {min: 1, max: undefined});
-  const isValidStatusID = validator.isInt(req_status_id, {min: 1, max: undefined});
-  const isValidTypeID = validator.isInt(req_type_id, {min: 1, max: undefined});
+  const isValidStartDate = validator.isDate(req_start_date, "YYYY-MM-DD");
+  const isValidEndDate = validator.isDate(req_end_date, "YYYY-MM-DD");
+  const isValidProjectID = validator.isInt(req_project_id, {
+    min: 1,
+    max: undefined,
+  });
+  const isValidPriorID = validator.isInt(req_prior_id, {
+    min: 1,
+    max: undefined,
+  });
+  const isValidStatusID = validator.isInt(req_status_id, {
+    min: 1,
+    max: undefined,
+  });
+  const isValidTypeID = validator.isInt(req_type_id, {
+    min: 1,
+    max: undefined,
+  });
 
-  if (
-    isValidName &&
-    isValidAssignee &&
-    !isValidStartDate &&
-    !isValidEndDate &&
-    isValidProjectID &&
-    isValidPriorID &&
-    isValidStatusID &&
-    isValidTypeID
-  )
-    return true;
-  return false;
+  if (!isValidName) return error.string_input_err("Name");
+  if (!isValidAssignee) return error.string_input_err("Assignee");
+  if (!isValidStartDate || !isValidEndDate) return error.date_input_err;
+  if (!isValidProjectID) return error.number_input_err("Project ID");
+  if (!isValidPriorID) return error.number_input_err("Priority ID");
+  if (!isValidStatusID) return error.number_input_err("Status ID");
+  if (!isValidTypeID) return error.number_input_err("Type ID");
+
+  const d1 = new Date(req_start_date);
+  const d2 = new Date(req_end_date);
+
+  if (d1 > d2) return error.date_range_err;
 };
 
 export const isValidUser = (
@@ -70,20 +90,70 @@ export const isValidUser = (
   const isValidBirthDay = validator.isDate(birthday, "MM-DD-YYYY");
   const isValidEmail = validator.isEmail(email);
 
-  if (
-    isValidUsername &&
-    !isValidPassword &&
-    isValidName &&
-    isValidBirthDay &&
-    isValidEmail
-  )
-    return true;
-  return false;
+  if (!isValidUsername) return error.string_input_err("Username");
+  if (isValidPassword) return error.string_input_err("Password");
+  if (!isValidName) return error.string_input_err("Name");
+  if (!isValidBirthDay) return error.date_input_err;
+  if (!isValidEmail) return error.email_input_err;
 };
 
 export const isValidLogin = (req_username: any, req_password: any) => {
   const isValidUsername = validator.isAlphanumeric(req_username);
   const isValidPassword = validator.isEmpty(req_password);
-  if(isValidUsername && !isValidPassword) return true;
-  return false;
-}
+
+  if (!isValidUsername) return error.string_input_err("Username");
+  if (isValidPassword) return error.string_input_err("Password");
+};
+
+export const isValidEditUser = (
+  name: any,
+  birthday: any,
+  email: any,
+  active: any
+) => {
+  const isValidName = validator.isAlpha(name);
+  const isValidBirthDay = validator.isDate(birthday, "MM-DD-YYYY");
+  const isValidEmail = validator.isEmail(email);
+  const isValidActive = validator.isBoolean(active);
+
+  if (!isValidName) return error.string_input_err("Name");
+  if (!isValidBirthDay) return error.date_input_err;
+  if (!isValidEmail) return error.email_input_err;
+  if (!isValidActive) return error.boolean_input_err;
+};
+
+export const isValidUserCreateTask = (
+  name: any,
+  req_start_date: any,
+  req_end_date: any,
+  req_prior_id: any,
+  req_status_id: any,
+  req_type_id: any
+) => {
+  const isValidName = validator.isAlpha(name);
+  const isValidStartDate = validator.isDate(req_start_date, "YYYY-MM-DD");
+  const isValidEndDate = validator.isDate(req_end_date, "YYYY-MM-DD");
+  const isValidPriorID = validator.isInt(req_prior_id, {
+    min: 1,
+    max: undefined,
+  });
+  const isValidStatusID = validator.isInt(req_status_id, {
+    min: 1,
+    max: undefined,
+  });
+  const isValidTypeID = validator.isInt(req_type_id, {
+    min: 1,
+    max: undefined,
+  });
+
+  if (!isValidName) return error.string_input_err("Name");
+  if (!isValidStartDate || !isValidEndDate) return error.date_input_err;
+  if (!isValidPriorID) return error.number_input_err("Priority ID");
+  if (!isValidStatusID) return error.number_input_err("Status ID");
+  if (!isValidTypeID) return error.number_input_err("Type ID");
+
+  const d1 = new Date(req_start_date);
+  const d2 = new Date(req_end_date);
+
+  if (d1 > d2) return error.date_range_err;
+};

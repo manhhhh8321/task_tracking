@@ -1,11 +1,26 @@
 import {
+  isValidEditUser,
   isValidLogin,
   isValidProject,
   isValidStatus,
   isValidTask,
   isValidType,
   isValidUser,
+  isValidUserCreateTask,
 } from "../validators/valid";
+
+export const error = {
+  string_input_err(str: any) {
+    return `${str} must be a string`;
+  },
+  number_input_err(str: any) {
+    return `${str} must be a number`;
+  },
+  boolean_input_err: { error_msg: "Must be a boolean" },
+  email_input_err: "Email must be a valid email",
+  date_input_err: { error_msg: "Date input invalid" },
+  date_range_err: { error_msg: "Date range invalid" },
+};
 
 const validator = require("validator");
 
@@ -18,14 +33,9 @@ export const validateCreateProject = (
 ) => {
   const { name, start_date, end_date } = req.body;
 
-  if (isValidProject(name, start_date, end_date)) {
-    return next();
-  } else {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "Project input invalid",
-    });
-  }
+  const result = isValidProject(name, start_date, end_date);
+  if (result) res.send(result);
+  else next();
 };
 
 export const validateNameAndOrder = (
@@ -34,12 +44,9 @@ export const validateNameAndOrder = (
   next: NextFunction
 ) => {
   const { name, order } = req.body;
-  if (!isValidStatus(name, order)) {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "Numeric format invalid",
-    });
-  } else return next();
+  const result = isValidType(name, order);
+  if (result) res.send(result);
+  else next();
 };
 
 export const validateNameAndColor = (
@@ -49,13 +56,9 @@ export const validateNameAndColor = (
 ) => {
   const { name, req_color } = req.body;
 
-  if (isValidType(name, req_color)) return next();
-  else {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "Name or request color invalid",
-    });
-  }
+  const result = isValidStatus(name, req_color);
+  if (result) res.send(result);
+  else next();
 };
 
 export const validateParamId = (
@@ -66,8 +69,7 @@ export const validateParamId = (
   const req_id = req.params.id;
 
   if (!validator.isInt(req_id, { min: 0, max: undefined })) {
-    return res.status(403).json({
-      status_code: 0,
+    return res.status(400).json({
       error_msg: "Numeric type invalid",
     });
   }
@@ -89,26 +91,19 @@ export const validateTask = (
     req_status_id,
     req_type_id,
   } = req.body;
-  //Validate task input
-  if (
-    isValidTask(
-      name,
-      assignee,
-      req_start_date,
-      req_end_date,
-      req_project_id,
-      req_prior_id,
-      req_status_id,
-      req_type_id
-    )
-  ) {
-    return next();
-  } else {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "Task input invalid",
-    });
-  }
+
+  const result = isValidTask(
+    name,
+    assignee,
+    req_start_date,
+    req_end_date,
+    req_project_id,
+    req_prior_id,
+    req_status_id,
+    req_type_id
+  );
+  if (result) res.send(result);
+  else next();
 };
 
 //Validate user login
@@ -118,13 +113,9 @@ export const validateLogin = (
   next: NextFunction
 ) => {
   const { uname, upass } = req.body;
-  if (isValidLogin(uname, upass)) return next();
-  else {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "Email or password invalid",
-    });
-  }
+  const result = isValidLogin(uname, upass);
+  if (result) res.send(result);
+  else next();
 };
 
 export const validateProjectIdAndTaskId = (
@@ -138,8 +129,7 @@ export const validateProjectIdAndTaskId = (
     !validator.isInt(req_project_id, { min: 0, max: undefined }) ||
     !validator.isInt(req_task_id, { min: 0, max: undefined })
   ) {
-    return res.status(403).json({
-      status_code: 0,
+    return res.status(400).json({
       error_msg: "Numeric type invalid",
     });
   }
@@ -157,15 +147,14 @@ export const validateUsernameAndParamsId = (
     !validator.isInt(req_id, { min: 0, max: undefined }) ||
     !validator.isAlphanumeric(req_username)
   ) {
-    return res.status(403).json({
-      status_code: 0,
+    return res.status(409).json({
       error_msg: "Username or params id invalid",
     });
   }
   return next();
 };
 
-export const validateParamsUserNameAndBodyTaskname = (
+export const validateParamsUserNameAndBodyTaskName = (
   req: Request,
   res: Response,
   next: NextFunction
@@ -176,8 +165,7 @@ export const validateParamsUserNameAndBodyTaskname = (
     !validator.isAlphanumeric(req_username) ||
     !validator.isAlphanumeric(req_task_name)
   ) {
-    return res.status(403).json({
-      status_code: 0,
+    return res.status(400).json({
       error_msg: "Username or task name invalid",
     });
   }
@@ -190,13 +178,9 @@ export const validateCreateUser = (
   next: NextFunction
 ) => {
   const { req_username, req_password, name, birthday, email } = req.body;
-  if (!isValidUser(req_username, req_password, name, birthday, email)) {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "Username or password invalid",
-    });
-  }
-  return next();
+  const result = isValidUser( req_username, req_password, name, birthday, email);
+  if (result) res.send(result);
+  else next();
 };
 
 export const validateEditUser = (
@@ -205,16 +189,31 @@ export const validateEditUser = (
   next: NextFunction
 ) => {
   const { name, birthday, email, active } = req.body;
-  if (
-    !validator.isAlphanumeric(name) ||
-    !validator.isEmail(email) ||
-    !validator.isDate(birthday) ||
-    !validator.isBoolean(active)
-  ) {
-    return res.status(403).json({
-      status_code: 0,
-      error_msg: "Name or email or birthday or active invalid",
-    });
-  }
-  return next();
+  if (!isValidEditUser(name, birthday, email, active)) return next();
+};
+export const validateUserCreateTask = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const {
+    name,
+    req_start_date,
+    req_end_date,
+    req_prior_id,
+    req_status_id,
+    req_type_id,
+  } = req.body;
+
+  const result = !isValidUserCreateTask(
+    name,
+    req_start_date,
+    req_end_date,
+    req_prior_id,
+    req_status_id,
+    req_type_id
+  );
+
+  if (result) res.send(result);
+  else next();
 };
