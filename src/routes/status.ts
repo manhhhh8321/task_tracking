@@ -5,12 +5,15 @@ import {
   viewAllStatus,
 } from "../controllers/status";
 import express from "express";
-import { validateNameAndOrder } from "../middlewares/validations";
+import {
+  validateParamId,
+  validateNameAndOrder,
+} from "../middlewares/validations";
 const statusRouter = express.Router();
 
 statusRouter.post("/", validateNameAndOrder, createStatus);
 statusRouter.get("/", viewAllStatus);
-statusRouter.put("/:id", validateNameAndOrder, editStatus);
-statusRouter.patch("/:id", setVisibleStatus);
+statusRouter.put("/:id", validateParamId, validateNameAndOrder, editStatus);
+statusRouter.patch("/:id", validateParamId, setVisibleStatus);
 
 export { statusRouter };

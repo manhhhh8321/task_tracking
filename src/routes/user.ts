@@ -7,14 +7,16 @@ import {
   viewUserDetail,
 } from "../controllers/users";
 import express from "express";
+import { validateCreateUser, validateEditUser, validateParamId } from "../middlewares/validations";
 const userRouter = express.Router();
 
-userRouter.post("/register", createUser);
-userRouter.get("/", viewAllUser);
-userRouter.get("/:userid", viewUserDetail);
-userRouter.put("/:userid", editUser);
-userRouter.delete("/:userid", deleteUser);
 userRouter.get("/create-inviteid", createInviteID);
+userRouter.post("/register", validateCreateUser, createUser);
+userRouter.get("/", viewAllUser);
+userRouter.get("/:id",validateParamId, viewUserDetail);
+userRouter.put("/:id",validateParamId,validateEditUser, editUser);
+userRouter.delete("/:id",validateParamId, deleteUser);
+
 
 
 export { userRouter };
