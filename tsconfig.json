@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-      "target": "ES2015",
-      "module": "commonjs",
+      "target": "ES6",
+      "module": "CommonJS",
       "outDir": "dist",
       "rootDir": "./src",
       "strict": true,
@@ -13,6 +13,11 @@
       "resolveJsonModule":true,
       "lib": [
         "es5", "es6", "dom", "dom.iterable"
-    ]
-  }
+      ],
+      "watch": true,
+      "emitDecoratorMetadata": true,
+      "experimentalDecorators": true,
+  },
+
+  
 }

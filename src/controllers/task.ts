@@ -40,16 +40,16 @@ const createTask = (req: Request, res: Response) => {
   }
 
   const statusIndex = statusArray.findIndex(
-    (item) => item.statusID === parseInt(req_status_id)
+    (item) => item.id === parseInt(req_status_id)
   );
   const priorityIndex = priorArray.findIndex(
-    (item) => item.priorID === parseInt(req_prior_id)
+    (item) => item.id === parseInt(req_prior_id)
   );
   const typeIndex = typeArray.findIndex(
-    (item) => item.typeID === parseInt(req_type_id)
+    (item) => item.id === parseInt(req_type_id)
   );
   const projectIndex = projectArray.findIndex(
-    (item) => item.projectID === parseInt(req_project_id)
+    (item) => item.id === parseInt(req_project_id)
   );
 
   const assigneeIndex = userArray.findIndex(
@@ -65,7 +65,7 @@ const createTask = (req: Request, res: Response) => {
 
   if (projectIndex >= 0) {
     const tasks = {
-      taskID: taskArray.length + 1,
+      id: taskArray.length + 1,
       taskName: name,
       assignee: assignee,
       start_date: req_start_date,
@@ -100,20 +100,20 @@ export const editTask = (req: Request, res: Response) => {
   } = req.body;
 
   const statusIndex = statusArray.findIndex(
-    (item) => item.statusID === parseInt(req_status_id)
+    (item) => item.id === parseInt(req_status_id)
   );
   const priorityIndex = priorArray.findIndex(
-    (item) => item.priorID === parseInt(req_prior_id)
+    (item) => item.id === parseInt(req_prior_id)
   );
   const typeIndex = typeArray.findIndex(
-    (item) => item.typeID === parseInt(req_type_id)
+    (item) => item.id === parseInt(req_type_id)
   );
   const projectIndex = projectArray.findIndex(
-    (item) => item.projectID === parseInt(req_project_id)
+    (item) => item.id === parseInt(req_project_id)
   );
 
   const index = taskArray.findIndex(
-    (item) => item.taskID === parseInt(req_task_id)
+    (item) => item.id === parseInt(req_task_id)
   );
 
   if (index >= 0) {
@@ -131,7 +131,7 @@ export const editTask = (req: Request, res: Response) => {
 
 export const deleteTask = (req: Request, res: Response) => {
   const req_id = (req.params.id);
-  const index = taskArray.findIndex((item) => item.taskID === parseInt(req_id));
+  const index = taskArray.findIndex((item) => item.id === parseInt(req_id));
 
   if (index >= 0) {
     taskArray.splice(index, 1);

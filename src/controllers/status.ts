@@ -1,20 +1,18 @@
 import { IStatus } from "../interfaces/main";
 import { Request, Response } from "express";
 
+import { Status } from "../entity/main";
+import { AppDataSource } from "../data-source";
+
 export const statusArray: IStatus[] = [];
 
-const createStatus = (req: Request, res: Response) => {
+const createStatus = async (req: Request, res: Response) => {
   const { name, order } = req.body;
 
-  const status: IStatus = {
-    statusID: statusArray.length + 1,
-    statusName: name,
-    orderNumber: order,
-    currentStatus: "New",
-    visible: true,
-  };
+  const statusRepo = AppDataSource.getRepository(Status);
+  const allStatus = await statusRepo.find();
 
-  const index = statusArray.findIndex((item) => item.statusName === name);
+  const index = allStatus.findIndex((item) => item.statusName === name);
 
   if (index >= 0) {
     return res.status(409).json({
@@ -22,26 +20,39 @@ const createStatus = (req: Request, res: Response) => {
     });
   }
 
-  if (req.body) {
-    statusArray.push(status);
+  // Create a new status
+  const newStatus = new Status();
+  newStatus.statusName = name;
+  newStatus.orderNumber = order;
+  newStatus.visible = true;
+  newStatus.currentStatus = "New";
+
+  // Save to database
+  const rs = await statusRepo.save(newStatus);
+  if (!rs) {
+    return res.status(500).json({
+      error_msg: "Cannot create status",
+    });
   }
-  res.send(statusArray);
+  res.send(rs);
 };
 
-const viewAllStatus = (req: Request, res: Response) => {
-  if (statusArray.length > 0) {
-    res.json(statusArray);
-  } else {
+const viewAllStatus = async (req: Request, res: Response) => {
+  const statusRepo = AppDataSource.getRepository(Status);
+  const allStatus = await statusRepo.find();
+
+  if (allStatus.length <= 0) {
     return res.status(204).json({
       error_msg: "No content found",
     });
   }
+  res.json(allStatus);
 };
 
 const editStatus = (req: Request, res: Response) => {
   const { name, order } = req.body;
   const id = parseInt(req.params.id);
-  const index = statusArray.findIndex((item) => item.statusID === id);
+  const index = statusArray.findIndex((item) => item.id === id);
 
   if (index >= 0) {
     statusArray[index].statusName = name;
@@ -56,7 +67,7 @@ const editStatus = (req: Request, res: Response) => {
 
 const setVisibleStatus = (req: Request, res: Response) => {
   const reqID = parseInt(req.params.id);
-  let index = statusArray.findIndex((item) => item.statusID === reqID);
+  let index = statusArray.findIndex((item) => item.id === reqID);
 
   if (index >= 0) {
     statusArray[index].visible = !statusArray[index].visible;

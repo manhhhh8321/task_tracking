@@ -10,7 +10,7 @@ const createType = async (req: Request, res: Response) => {
   const { name, req_color } = req.body;
 
   const types: IType = {
-    typeID: typeArray.length + 1,
+    id: typeArray.length + 1,
     defaultColor: "white",
     color: req_color,
     typeName: name,
@@ -62,7 +62,7 @@ const viewAllType = (req: Request, res: Response) => {
 const editType = (req: Request, res: Response, next: NextFunction) => {
   const { name, req_color } = req.body;
   const id = parseInt(req.params.id);
-  let index = typeArray.findIndex((item) => item.typeID === id);
+  let index = typeArray.findIndex((item) => item.id === id);
 
   if (index >= 0) {
     typeArray[index].typeName = name;
@@ -78,7 +78,7 @@ const editType = (req: Request, res: Response, next: NextFunction) => {
 const setVisibleType = (req: Request, res: Response) => {
   const req_id = (req.params.id);
 
-  const index = typeArray.findIndex((item) => item.typeID === parseInt(req_id));
+  const index = typeArray.findIndex((item) => item.id === parseInt(req_id));
   if (index >= 0) {
     typeArray[index].visible = !typeArray[index].visible;
   } else {

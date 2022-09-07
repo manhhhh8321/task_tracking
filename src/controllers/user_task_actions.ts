@@ -58,16 +58,16 @@ export const userCreatePrivateTask = (req: Request, res: Response) => {
   }
 
   const statusIndex = statusArray.findIndex(
-    (item) => item.statusID === parseInt(req_status_id)
+    (item) => item.id === parseInt(req_status_id)
   );
   const priorityIndex = priorArray.findIndex(
-    (item) => item.priorID === parseInt(req_prior_id)
+    (item) => item.id === parseInt(req_prior_id)
   );
   const typeIndex = typeArray.findIndex(
-    (item) => item.typeID === parseInt(req_type_id)
+    (item) => item.id === parseInt(req_type_id)
   );
   const projectIndex = projectArray.findIndex(
-    (item) => item.projectID === parseInt(req_project_id)
+    (item) => item.id === parseInt(req_project_id)
   );
 
   const assigneeIndex = userArray.findIndex(
@@ -96,7 +96,7 @@ export const userCreatePrivateTask = (req: Request, res: Response) => {
 
   if (projectIndex >= 0) {
     const tasks = {
-      taskID: taskArray.length + 1,
+      id: taskArray.length + 1,
       taskName: name,
       assignee: username,
       start_date: req_start_date,
@@ -152,16 +152,16 @@ export const userEditPrivateTask = (req: Request, res: Response) => {
 
 
   const statusIndex = statusArray.findIndex(
-    (item) => item.statusID === parseInt(req_status_id)
+    (item) => item.id === parseInt(req_status_id)
   );
   const priorityIndex = priorArray.findIndex(
-    (item) => item.priorID === parseInt(req_prior_id)
+    (item) => item.id === parseInt(req_prior_id)
   );
   const typeIndex = typeArray.findIndex(
-    (item) => item.typeID === parseInt(req_type_id)
+    (item) => item.id === parseInt(req_type_id)
   );
   const projectIndex = projectArray.findIndex(
-    (item) => item.projectID === project_id
+    (item) => item.id === project_id
   );
   const userIndex = userArray.findIndex((item) => item.username === username);
 
@@ -169,7 +169,7 @@ export const userEditPrivateTask = (req: Request, res: Response) => {
     assignee = "Me";
   }
 
-  const index = taskArray.findIndex((item) => item.taskID === task_id);
+  const index = taskArray.findIndex((item) => item.id === task_id);
 
   if (index >= 0) {
     taskArray[index].taskName = name;
@@ -237,7 +237,7 @@ export const allUserTask = (req: Request, res: Response) => {
   }
 
   const userIndex = userArray.findIndex(
-    (item) => item.userID === parseInt(user_id)
+    (item) => item.id === parseInt(user_id)
   );
 
   if (userIndex >= 0) {

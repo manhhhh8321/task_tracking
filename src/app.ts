@@ -1,4 +1,6 @@
-import express = require("express");
+import "reflect-metadata";
+
+const express = require("express");
 import { Application } from "express";
 import { projectRouter } from "./routes/project";
 import bodyParser from "body-parser";
@@ -12,6 +14,7 @@ import { userPrivateTaskRouter } from "./routes/user_task_action";
 import { loginRouter } from "./routes/login";
 import { userProjectRouter } from "./routes/user_project";
 import { adminAuth, userAuth } from "./middlewares/auth";
+import { createAdmin } from "./controllers/admin_login";
 
 const app: Application = express();
 
@@ -19,6 +22,8 @@ app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 //User login
 app.use("/", loginRouter);
+
+app.get("/create-admin",createAdmin);
 // Manage project
 app.use("/project", adminAuth, projectRouter);
 //Manage type

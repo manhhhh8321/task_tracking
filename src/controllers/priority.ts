@@ -17,7 +17,7 @@ const createPrior = (req: Request, res: Response) => {
   }
 
   const priors: IPriority = {
-    priorID: priorArray.length + 1,
+    id: priorArray.length + 1,
     priorName: name,
     orderNumber: order,
     visible: true,
@@ -43,7 +43,7 @@ const editPrior = (req: Request, res: Response) => {
   const { name, order } = req.body;
   const id = req.params.id;
 
-  const index = priorArray.findIndex((item) => item.priorID === parseInt(id));
+  const index = priorArray.findIndex((item) => item.id === parseInt(id));
 
   if (index >= 0) {
     priorArray[index].priorName = name;
@@ -59,7 +59,7 @@ const editPrior = (req: Request, res: Response) => {
 const setVisiblePrior = (req: Request, res: Response) => {
   const reqID = (req.params.id);
 
-  const index = priorArray.findIndex((item) => item.priorID === parseInt(reqID));
+  const index = priorArray.findIndex((item) => item.id === parseInt(reqID));
 
   if (index >= 0) {
     priorArray[index].visible = !priorArray[index].visible;

@@ -1,5 +1,5 @@
 export interface IProject {
-  projectID: number;
+  id: number;
   projectName: string;
   members: string[];
   start_date: string;
@@ -10,7 +10,7 @@ export interface IProject {
 }
 
 export interface IManageUser {
-  userID: number;
+  id: number;
   inviteID: number;
   defaultProject: string;
   allProjects: string[];
@@ -18,7 +18,7 @@ export interface IManageUser {
 }
 
 export interface IStatus {
-  statusID: number;
+  id: number;
   statusName: string;
   orderNumber: number;
   currentStatus: string;
@@ -26,14 +26,14 @@ export interface IStatus {
 }
 
 export interface IPriority {
-  priorID: number;
+  id: number;
   priorName: string;
   orderNumber: number;
   visible: boolean;
 }
 
 export interface IType {
-  typeID: number;
+  id: number;
   defaultColor: string;
   color: string;
   typeName: string;
@@ -41,7 +41,7 @@ export interface IType {
 }
 
 export interface ITask {
-  taskID: number;
+  id: number;
   taskName: string;
   assignee: string;
   project: IProject;
@@ -53,22 +53,21 @@ export interface ITask {
 }
 
 export interface Users {
-  userID: number;
+  id: number;
   username: string;
   password: string;
   name: string;
   birthday: string;
   email: string;
-  inviteID: number;
+  inviteID: string;
   active: boolean;
-  defaultProject: string;
+  defaultProject: IProject;
   allProjects: string[];
   project: IProject;
   task: string[];
 }
 
 export interface Admins {
-  userID: number;
   username: string;
   password: string;
   role: string;

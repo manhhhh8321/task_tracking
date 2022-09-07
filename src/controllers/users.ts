@@ -40,7 +40,7 @@ export const createUser = (req: Request, res: Response) => {
   }
 
   const users: Users = {
-    userID: userArray.length + 1,
+    id: userArray.length + 1,
     username: req_username,
     password: hash,
     name: name,
@@ -48,7 +48,7 @@ export const createUser = (req: Request, res: Response) => {
     email: email,
     inviteID: req_inviteID,
     active: true,
-    defaultProject: projectArray[0].projectName,
+    defaultProject: projectArray[0],
     allProjects: [],
     project: projectArray[0],
     task: [],
@@ -73,7 +73,7 @@ export const viewUserDetail = (req: Request, res: Response) => {
     });
   }
 
-  const userIndex = userArray.findIndex((item) => item.userID === user_id);
+  const userIndex = userArray.findIndex((item) => item.id === user_id);
 
   res.send(`${userArray[userIndex].allProjects}\n${userArray[userIndex].task}`);
 };
@@ -93,7 +93,7 @@ export const deleteUser = (req: Request, res: Response) => {
     });
   }
   const userIndex = userArray.findIndex(
-    (item) => item.userID === parseInt(user_id)
+    (item) => item.id === parseInt(user_id)
   );
 
   if (userIndex >= 0) {
@@ -128,7 +128,7 @@ export const editUser = (req: Request, res: Response) => {
     });
   }
 
-  const userIndex = userArray.findIndex((item) => item.userID === user_id);
+  const userIndex = userArray.findIndex((item) => item.id === user_id);
 
   userArray[userIndex].name = name;
   userArray[userIndex].birthday = birthday;
