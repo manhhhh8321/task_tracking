@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import { DataSource } from "typeorm";
-import { Admin,Priority,Project,Status,Task,Type,User } from "./entity/main";
+import { Admin,Priority,Project,Status,Task,Type,User,Invite } from "./entity/main";
 
 export const AppDataSource = new DataSource({
   type: "mysql",
@@ -9,8 +9,10 @@ export const AppDataSource = new DataSource({
   username: "root",
   password: "",
   database: "test",
-  entities: [User, Admin,Priority,Project,Status,Task,Type, "./entity/main.ts"],
+  entities: [User, Admin,Priority,Project,Status,Task,Type,Invite, "./entity/main.ts"],
   synchronize: true,
+  migrations: [],
+  
 });
 
 //initialize the database connection
