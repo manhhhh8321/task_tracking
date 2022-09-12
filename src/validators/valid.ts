@@ -26,9 +26,9 @@ export const isValidType = (name: any, reqColor: any) => {
 
 export const isValidStatus = (name: any, order: any) => {
   const isValidName = validator.isNumeric(name);
-  const isValidOrder = validator.isInt(order, { min: 1, max: undefined });
+  const isValidOrder = validator.isNumeric(order, { min: 1, max: undefined });
 
-  if (!isValidName) return error.string_input_err("Name");
+  if (isValidName) return error.string_input_err("Name");
   if (!isValidOrder) return error.number_input_err("Order");
 };
 
@@ -42,28 +42,28 @@ export const isValidTask = (
   req_status_id: any,
   req_type_id: any
 ) => {
-  const isValidName = validator.isAlpha(name);
-  const isValidAssignee = validator.isAlpha(assignee);
+  const isValidName = validator.isNumeric(name);
+  const isValidAssignee = validator.isAlphanumeric(assignee);
   const isValidStartDate = validator.isDate(req_start_date, "YYYY-MM-DD");
   const isValidEndDate = validator.isDate(req_end_date, "YYYY-MM-DD");
-  const isValidProjectID = validator.isInt(req_project_id, {
+  const isValidProjectID = validator.isNumeric(req_project_id, {
     min: 1,
     max: undefined,
   });
-  const isValidPriorID = validator.isInt(req_prior_id, {
+  const isValidPriorID = validator.isNumeric(req_prior_id, {
     min: 1,
     max: undefined,
   });
-  const isValidStatusID = validator.isInt(req_status_id, {
+  const isValidStatusID = validator.isNumeric(req_status_id, {
     min: 1,
     max: undefined,
   });
-  const isValidTypeID = validator.isInt(req_type_id, {
+  const isValidTypeID = validator.isNumeric(req_type_id, {
     min: 1,
     max: undefined,
   });
 
-  if (!isValidName) return error.string_input_err("Name");
+  if (isValidName) return error.string_input_err("Name");
   if (!isValidAssignee) return error.string_input_err("Assignee");
   if (!isValidStartDate || !isValidEndDate) return error.date_input_err;
   if (!isValidProjectID) return error.number_input_err("Project ID");
@@ -87,7 +87,7 @@ export const isValidUser = (
   const isValidUsername = validator.isAlphanumeric(req_username);
   const isValidPassword = validator.isEmpty(req_password);
   const isValidName = validator.isAlpha(name);
-  const isValidBirthDay = validator.isDate(birthday, "MM-DD-YYYY");
+  const isValidBirthDay = validator.isDate(birthday, "YYYY-MM-DD");
   const isValidEmail = validator.isEmail(email);
 
   if (!isValidUsername) return error.string_input_err("Username");
@@ -112,7 +112,7 @@ export const isValidEditUser = (
   active: any
 ) => {
   const isValidName = validator.isAlpha(name);
-  const isValidBirthDay = validator.isDate(birthday, "MM-DD-YYYY");
+  const isValidBirthDay = validator.isDate(birthday, "YYYY-MM-DD");
   const isValidEmail = validator.isEmail(email);
   const isValidActive = validator.isBoolean(active);
 
@@ -130,23 +130,23 @@ export const isValidUserCreateTask = (
   req_status_id: any,
   req_type_id: any
 ) => {
-  const isValidName = validator.isAlpha(name);
+  const isValidName = validator.isNumeric(name);
   const isValidStartDate = validator.isDate(req_start_date, "YYYY-MM-DD");
   const isValidEndDate = validator.isDate(req_end_date, "YYYY-MM-DD");
-  const isValidPriorID = validator.isInt(req_prior_id, {
+  const isValidPriorID = validator.isNumeric(req_prior_id, {
     min: 1,
     max: undefined,
   });
-  const isValidStatusID = validator.isInt(req_status_id, {
+  const isValidStatusID = validator.isNumeric(req_status_id, {
     min: 1,
     max: undefined,
   });
-  const isValidTypeID = validator.isInt(req_type_id, {
+  const isValidTypeID = validator.isNumeric(req_type_id, {
     min: 1,
     max: undefined,
   });
 
-  if (!isValidName) return error.string_input_err("Name");
+  if (isValidName) return error.string_input_err("Name");
   if (!isValidStartDate || !isValidEndDate) return error.date_input_err;
   if (!isValidPriorID) return error.number_input_err("Priority ID");
   if (!isValidStatusID) return error.number_input_err("Status ID");
