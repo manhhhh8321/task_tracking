@@ -44,7 +44,7 @@ export const validateNameAndOrder = (
   next: NextFunction
 ) => {
   const { name, order } = req.body;
-  const result = isValidType(name, order);
+  const result = isValidStatus(name, order);
   if (result) res.send(result);
   else next();
 };
@@ -56,7 +56,7 @@ export const validateNameAndColor = (
 ) => {
   const { name, req_color } = req.body;
 
-  const result = isValidStatus(name, req_color);
+  const result = isValidType(name, req_color);
   if (result) res.send(result);
   else next();
 };
@@ -68,7 +68,7 @@ export const validateParamId = (
 ) => {
   const req_id = req.params.id;
 
-  if (!validator.isInt(req_id, { min: 0, max: undefined })) {
+  if (!validator.isNumeric(req_id, { min: 0, max: undefined })) {
     return res.status(400).json({
       error_msg: "Numeric type invalid",
     });
@@ -123,11 +123,11 @@ export const validateProjectIdAndTaskId = (
   res: Response,
   next: NextFunction
 ) => {
-  const req_project_id = req.params.id;
+  const req_project_id = req.params.project_id;
   const req_task_id = req.params.task_id;
   if (
-    !validator.isInt(req_project_id, { min: 0, max: undefined }) ||
-    !validator.isInt(req_task_id, { min: 0, max: undefined })
+    !validator.isNumeric(req_project_id, { min: 0, max: undefined }) ||
+    !validator.isNumeric(req_task_id, { min: 0, max: undefined })
   ) {
     return res.status(400).json({
       error_msg: "Numeric type invalid",
@@ -144,7 +144,7 @@ export const validateUsernameAndParamsId = (
   const req_username = req.params.username;
   const req_id = req.params.id;
   if (
-    !validator.isInt(req_id, { min: 0, max: undefined }) ||
+    !validator.isNumeric(req_id, { min: 0, max: undefined }) ||
     !validator.isAlphanumeric(req_username)
   ) {
     return res.status(409).json({
@@ -205,7 +205,7 @@ export const validateUserCreateTask = (
     req_type_id,
   } = req.body;
 
-  const result = !isValidUserCreateTask(
+  const result = isValidUserCreateTask(
     name,
     req_start_date,
     req_end_date,
