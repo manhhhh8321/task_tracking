@@ -1,16 +1,11 @@
-
 import { Request, Response } from "express";
 import { ITask } from "../interfaces/main";
-import { statusArray } from "./status";
-import { typeArray } from "./type";
-import { priorArray } from "./priority";
-import { projectArray } from "./project";
-import { userArray } from "./users";
-import { isValidTask } from "../validators/valid";
+import { AppDataSource } from "../data-source";
+import { Status, Priority, Task, Type, User, Project } from "../entity/main";
 
 export const taskArray: ITask[] = [];
 
-const createTask = (req: Request, res: Response) => {
+const createTask = async (req: Request, res: Response) => {
   const {
     name,
     assignee,
@@ -22,71 +17,66 @@ const createTask = (req: Request, res: Response) => {
     req_type_id,
   } = req.body;
 
-  if (
-    !isValidTask(
-      name,
-      assignee,
-      req_start_date,
-      req_end_date,
-      req_project_id,
-      req_prior_id,
-      req_status_id,
-      req_type_id
-    )
-  ) {
-    return res.status(400).json({
-      error_msg: "Task input invalid",
-    });
-  }
+  const statusRepo = AppDataSource.getRepository(Status);
+  const priorRepo = AppDataSource.getRepository(Priority);
+  const taskRepo = AppDataSource.getRepository(Task);
+  const typeRepo = AppDataSource.getRepository(Type);
+  const userRepo = AppDataSource.getRepository(User);
+  const projectRepo = AppDataSource.getRepository(Project);
 
-  const statusIndex = statusArray.findIndex(
-    (item) => item.id === parseInt(req_status_id)
-  );
-  const priorityIndex = priorArray.findIndex(
-    (item) => item.id === parseInt(req_prior_id)
-  );
-  const typeIndex = typeArray.findIndex(
-    (item) => item.id === parseInt(req_type_id)
-  );
-  const projectIndex = projectArray.findIndex(
+  const allUsers = await userRepo.find();
+  const allProjects = await projectRepo.find();
+  const allStatus = await statusRepo.find();
+  const allPrior = await priorRepo.find();
+  const allType = await typeRepo.find();
+
+  const userIndex = allUsers.findIndex((item) => item.username === assignee);
+  const projectIndex = allProjects.findIndex(
     (item) => item.id === parseInt(req_project_id)
   );
-
-  const assigneeIndex = userArray.findIndex(
-    (item) => item.username === assignee
+  const statusIndex = allStatus.findIndex(
+    (item) => item.id === parseInt(req_status_id)
+  );
+  const priorIndex = allPrior.findIndex(
+    (item) => item.id === parseInt(req_prior_id)
+  );
+  const typeIndex = allType.findIndex(
+    (item) => item.id === parseInt(req_type_id)
   );
 
-  if (assigneeIndex < 0) {
+  if (userIndex < 0) {
     return res.status(404).json({
       error_msg: "Cannot find user",
     });
   }
 
-
-  if (projectIndex >= 0) {
-    const tasks = {
-      id: taskArray.length + 1,
-      taskName: name,
-      assignee: assignee,
-      start_date: req_start_date,
-      end_date: req_end_date,
-      project: projectArray[projectIndex],
-      type: typeArray[typeIndex],
-      status: statusArray[statusIndex],
-      priority: priorArray[priorityIndex],
-    };
-    userArray[assigneeIndex].task.push(tasks.taskName);
-    projectArray[projectIndex].tasks.push(tasks.taskName);
-    taskArray.push(tasks);
-  } else {
+  if (projectIndex < 0) {
     return res.status(400).json({
       error_msg: "Cannot create task",
     });
   }
-  res.send(taskArray);
+  // Create new query builder instance for the task table
+  const task = new Task();
+  task.taskName = name;
+  task.start_date = req_start_date;
+  task.end_date = req_end_date;
+  task.project = allProjects[projectIndex];
+  task.type = allType[typeIndex];
+  task.status = allStatus[statusIndex];
+  task.priority = allPrior[priorIndex];
+  task.assignee = allUsers[userIndex].username;
+
+  const rs = await taskRepo.save(task);
+
+  if (!rs) {
+    return res.status(400).json({
+      error_msg: "Cannot create task",
+    });
+  }
+  res.send(rs);
 };
 
-export const editTask = (req: Request, res: Response) => {
+export const editTask = async (req: Request, res: Response) => {
   const req_task_id = req.params.id;
   const {
     name,
@@ -99,62 +89,119 @@ export const editTask = (req: Request, res: Response) => {
     req_type_id,
   } = req.body;
 
-  const statusIndex = statusArray.findIndex(
-    (item) => item.id === parseInt(req_status_id)
-  );
-  const priorityIndex = priorArray.findIndex(
-    (item) => item.id === parseInt(req_prior_id)
-  );
-  const typeIndex = typeArray.findIndex(
-    (item) => item.id === parseInt(req_type_id)
-  );
-  const projectIndex = projectArray.findIndex(
+  const statusRepo = AppDataSource.getRepository(Status);
+  const priorRepo = AppDataSource.getRepository(Priority);
+  const taskRepo = AppDataSource.getRepository(Task);
+  const typeRepo = AppDataSource.getRepository(Type);
+  const userRepo = AppDataSource.getRepository(User);
+  const projectRepo = AppDataSource.getRepository(Project);
+
+  const allUsers = await userRepo.find();
+  const allProjects = await projectRepo.find();
+  const allStatus = await statusRepo.find();
+  const allPrior = await priorRepo.find();
+  const allType = await typeRepo.find();
+  const allTasks = await taskRepo.find();
+
+  const userIndex = allUsers.findIndex((item) => item.username === assignee);
+  const projectIndex = allProjects.findIndex(
     (item) => item.id === parseInt(req_project_id)
   );
-
-  const index = taskArray.findIndex(
+  const statusIndex = allStatus.findIndex(
+    (item) => item.id === parseInt(req_status_id)
+  );
+  const priorIndex = allPrior.findIndex(
+    (item) => item.id === parseInt(req_prior_id)
+  );
+  const typeIndex = allType.findIndex(
+    (item) => item.id === parseInt(req_type_id)
+  );
+  const taskIndex = allTasks.findIndex(
     (item) => item.id === parseInt(req_task_id)
   );
 
-  if (index >= 0) {
-    taskArray[index].taskName = name;
-    taskArray[index].assignee = assignee;
-    taskArray[index].start_date = req_start_date;
-    taskArray[index].end_date = req_end_date;
-    taskArray[index].project = projectArray[projectIndex];
-    taskArray[index].priority = priorArray[priorityIndex];
-    taskArray[index].status = statusArray[statusIndex];
-    taskArray[index].type = typeArray[typeIndex];
+  if (taskIndex < 0) {
+    return res.status(404).json({
+      error_msg: "Cannot find task",
+    });
   }
-  res.send(taskArray[index]);
+
+  if (userIndex < 0) {
+    return res.status(404).json({
+      error_msg: "Cannot find user",
+    });
+  }
+
+  // Create new query builder instance to update the task table
+  const query = AppDataSource.createQueryBuilder()
+    .update(Task)
+    .set({
+      taskName: name,
+      start_date: req_start_date,
+      end_date: req_end_date,
+      project: allProjects[projectIndex],
+      type: allType[typeIndex],
+      status: allStatus[statusIndex],
+      priority: allPrior[priorIndex],
+      assignee: allUsers[userIndex].username,
+    })
+    .where("id = :id", { id: parseInt(req_task_id) });
+
+  const rs = await query.execute();
+
+  if (!rs) {
+    return res.status(400).json({
+      error_msg: "Cannot update task",
+    });
+  }
+  res.send(`Task ${req_task_id} updated`);
 };
 
-export const deleteTask = (req: Request, res: Response) => {
-  const req_id = (req.params.id);
-  const index = taskArray.findIndex((item) => item.id === parseInt(req_id));
+export const deleteTask = async (req: Request, res: Response) => {
+  const req_id = req.params.id;
 
-  if (index >= 0) {
-    taskArray.splice(index, 1);
-    res.send(taskArray);
-  } else {
+  const taskRepo = AppDataSource.getRepository(Task);
+  const allTasks = await taskRepo.find();
+  const index = allTasks.findIndex((item) => item.id === parseInt(req_id));
+
+  if (index < 0) {
     return res.status(400).json({
       error_msg: "Cannot delete task",
     });
   }
+  // Create new query builder to delete task by req_id
+  const query = taskRepo
+    .createQueryBuilder()
+    .delete()
+    .from(Task)
+    .where("id = :id", { id: parseInt(req_id) });
+
+  const rs = await query.execute();
+
+  if (!rs) {
+    return res.status(400).json({
+      error_msg: "Cannot delete task",
+    });
+  }
+  res.send(`Task ${req_id} deleted`);
 };
 
-export const viewAllTasks = (req: Request, res: Response) => {
+export const viewAllTasks = async (req: Request, res: Response) => {
   const obj: Record<string, any> = {};
-  const statusArr = statusArray.map((item) => item.statusName);
 
-  statusArr.forEach((element) => {
-    obj[element] = [];
+  const taskRepo = AppDataSource.getRepository(Task);
+  const allTasks = await taskRepo.find({relations: ["project", "type", "status", "priority"]});
+  const allStatus = await AppDataSource.getRepository(Status).find();
+  const statusArr = allStatus.map((item) => item.statusName);
+
+  statusArr.forEach((el) => {
+    obj[el] = [];
   });
 
-  for (let i = 0; i < taskArray.length; i++) {
-    const temp = taskArray[i].status.statusName;
-    obj[`${temp}`].push(taskArray[i]);
-  }
+  allTasks.forEach((element) => {
+    const temp = element.status.statusName;
+    obj[`${temp}`].push(element);
+  });
 
   if (!obj) {
     return res.status(204).json({

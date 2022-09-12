@@ -2,7 +2,7 @@ import { Response, Request, NextFunction } from "express";
 import { Admins } from "../interfaces/main";
 import { userArray } from "./users";
 import { AppDataSource } from "../data-source";
-import { Admin } from "../entity/main";
+import { Admin, User } from "../entity/main";
 
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
@@ -13,12 +13,14 @@ export const SECRET = "SECRET";
 
 const hash = bcrypt.hashSync(passwordStr, saltRounds);
 
-export const adminAccount: Admins[] = [];
+
+const adminRepo = AppDataSource.getRepository(Admin);
+const userRepo = AppDataSource.getRepository(User);
 
 export const createAdmin = async (req: Request, res: Response) => {
   // Delete data from table admin
-  const adminRepository = AppDataSource.getRepository(Admin);
-  await adminRepository.clear();
+
+  await adminRepo.clear();
 
   const user = new Admin();
   user.username = "admin";
@@ -40,10 +42,10 @@ export const userLogin = async (
 ) => {
   const { uname, upass } = req.body;
 
-  const adminRepo = AppDataSource.getRepository(Admin);
+  const allUsers = await userRepo.find();
   const allAdmins = await adminRepo.find();
 
-  const userIndex = userArray.findIndex((item) => item.username === uname);
+  const userIndex = allUsers.findIndex((item) => item.username === uname);
   const adminIndex = allAdmins.findIndex((item) => item.username === uname);
 
   if (adminIndex >= 0) {
@@ -70,12 +72,12 @@ export const userLogin = async (
   } else {
     if (userIndex >= 0) {
       if (
-        uname === userArray[userIndex].username &&
-        bcrypt.compareSync(upass, userArray[userIndex].password) &&
-        userArray[userIndex].active != false
+        uname === allUsers[userIndex].username &&
+        bcrypt.compareSync(upass, allUsers[userIndex].password) &&
+        allUsers[userIndex].active != false
       ) {
         const accessToken = jwt.sign(
-          { username: userArray[userIndex].username },
+          { username: allUsers[userIndex].username, id: allUsers[userIndex].id },
           SECRET
         );
         return res.send(accessToken);

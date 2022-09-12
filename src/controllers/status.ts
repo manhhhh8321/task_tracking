@@ -49,33 +49,53 @@ const viewAllStatus = async (req: Request, res: Response) => {
   res.json(allStatus);
 };
 
-const editStatus = (req: Request, res: Response) => {
+const editStatus = async (req: Request, res: Response) => {
   const { name, order } = req.body;
   const id = parseInt(req.params.id);
-  const index = statusArray.findIndex((item) => item.id === id);
 
-  if (index >= 0) {
-    statusArray[index].statusName = name;
-    statusArray[index].orderNumber = order;
-  } else {
+  const statusRepo = AppDataSource.getRepository(Status);
+  const allStatus = await statusRepo.find();
+
+  const index = allStatus.findIndex((item) => item.id === id);
+
+  if (index < 0) {
     return res.status(404).json({
       error_msg: "Cannot find status name",
     });
+    
+  } 
+  // Create query builder to update status
+
+  const rs = await AppDataSource.createQueryBuilder().update(Status).set({ statusName: name, orderNumber: order }).where("id = :id", { id: id }).execute();
+  
+  if (!rs) {
+    return res.status(500).json({
+      error_msg: "Cannot update status",
+    });
   }
-  res.send(statusArray[index]);
+  res.send(`Update status ${name} successfully`);
 };
 
-const setVisibleStatus = (req: Request, res: Response) => {
+const setVisibleStatus = async (req: Request, res: Response) => {
   const reqID = parseInt(req.params.id);
-  let index = statusArray.findIndex((item) => item.id === reqID);
 
-  if (index >= 0) {
-    statusArray[index].visible = !statusArray[index].visible;
-  } else {
+  const statusRepo = AppDataSource.getRepository(Status);
+  const allStatus = await statusRepo.find();
+
+  let index = allStatus.findIndex((item) => item.id === reqID);
+
+  if (index < 0) {
     return res.status(404).json({
       error_msg: "Cannot find status id",
     });
+   
+  } 
+  const rs = await AppDataSource.createQueryBuilder().update(Status).set({ visible: !allStatus[index].visible }).where("id = :id", { id: reqID }).execute();
+  if (!rs) {
+    return res.status(500).json({
+      error_msg: "Cannot update status",
+    });
   }
-  res.send(statusArray[index]);
+  res.send(`Update status ${allStatus[index].statusName} successfully`);
 };
 export { createStatus, editStatus, viewAllStatus, setVisibleStatus };

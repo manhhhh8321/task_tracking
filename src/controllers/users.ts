@@ -6,134 +6,213 @@ const saltRounds = 10;
 import { Users } from "../interfaces/main";
 import { Request, Response } from "express";
 import { projectArray } from "./project";
-
+import { Project, User } from "../entity/main";
+import { AppDataSource } from "../data-source";
+import { Invite } from "../entity/main";
 
 export const userArray: Users[] = [];
 
 export const inviteIdList: string[] = [];
 
-export const createInviteID = (req: Request, res: Response) => {
+const userRepo = AppDataSource.getRepository(User);
+const inviteRepo = AppDataSource.getRepository(Invite);
+const projectRepo = AppDataSource.getRepository(Project);
+
+export const createInviteID = async (req: Request, res: Response) => {
   const newId = uniqid();
-  inviteIdList.push(newId);
+  const inviteRepo = AppDataSource.getRepository(Invite);
+  const allInvites = await inviteRepo.find();
+  const inviteIndex = allInvites.findIndex((item) => item.id === newId);
+
+  if (inviteIndex >= 0) {
+    return res.status(404).json({
+      error_msg: "Invite ID is existed",
+    });
+  }
+
+  const createNewInvite = () => {
+    const newInvite = new Invite();
+    newInvite.id = newId;
+    return newInvite;
+  };
+
+  const newInvite = createNewInvite();
+  const rs = await inviteRepo.save(newInvite);
+
+  if (!rs) {
+    return res.status(404).json({
+      error_msg: "Create invite ID failed",
+    });
+  }
   res.send(newId);
 };
 
-export const createUser = (req: Request, res: Response) => {
+export const createUser = async (req: Request, res: Response) => {
   const { req_username, req_password, req_inviteID, name, birthday, email } =
     req.body;
 
   const hash = bcrypt.hashSync(req_password, saltRounds);
 
-  const index = userArray.findIndex((item) => item.username === req_username);
+  const allUsers = await userRepo.find();
+  const allInvites = await inviteRepo.find();
+  const allProjects = await projectRepo.find();
+
+  const index = allUsers.findIndex((item) => item.username === req_username);
 
   if (index >= 0) {
     return res.status(409).json({
       error_msg: "User already exists",
     });
   }
-  const inviteIdIndex = inviteIdList.indexOf(req_inviteID);
 
-  if (inviteIdIndex < 0) {
+  const inviteIndex = allInvites.findIndex((item) => item.id === req_inviteID);
+
+  if (inviteIndex < 0) {
     return res.status(400).json({
       error_msg: "InviteID invalid",
     });
   }
 
-  const users: Users = {
-    id: userArray.length + 1,
-    username: req_username,
-    password: hash,
-    name: name,
-    birthday: birthday,
-    email: email,
-    inviteID: req_inviteID,
-    active: true,
-    defaultProject: projectArray[0],
-    allProjects: [],
-    project: projectArray[0],
-    task: [],
+  // Create transaction to create new user and delete inviteID from invite table
+  const createNewUser = () => {
+    const newUser = new User();
+    newUser.username = req_username;
+    newUser.password = hash;
+    newUser.name = name;
+    newUser.birthday = birthday;
+    newUser.email = email;
+    newUser.inviteID = req_inviteID;
+    newUser.active = true;
+    newUser.defaultProject = allProjects[0].projectName || "default";
+    newUser.allProjects = [];
+    newUser.task = [];
+    return newUser;
   };
 
-  if (userArray.push(users)) {
-    inviteIdList.splice(inviteIdIndex, 1);
+  const newUser = createNewUser();
+  const rs = await userRepo.save(newUser);
+
+  if (!rs) {
+    return res.status(500).json({
+      error_msg: "Cannot create user",
+    });
   }
-  res.send(userArray);
+
+  const deleteInvite = await inviteRepo.delete(req_inviteID);
+
+  if (!deleteInvite) {
+    return res.status(500).json({
+      error_msg: "Cannot delete invite ID",
+    });
+  }
+
+  res.send("Create user successfully");
 };
 
-export const viewAllUser = (req: Request, res: Response) => {
-  res.send(userArray);
+export const viewAllUser = async (req: Request, res: Response) => {
+  const userRepo = AppDataSource.getRepository(User);
+  const allUsers = await userRepo.find();
+
+  if (!allUsers) {
+    return res.status(404).json({
+      error_msg: "View all user failed",
+    });
+  }
+  res.send(allUsers);
 };
 
-export const viewUserDetail = (req: Request, res: Response) => {
+export const viewUserDetail = async (req: Request, res: Response) => {
   const user_id = parseInt(req.params.userid);
 
-  if (userArray.length < 0) {
+  const userRepo = AppDataSource.getRepository(User);
+  const allUsers = await userRepo.find();
+
+  if (allUsers.length < 0) {
     return res.status(204).json({
       error_msg: "User not exists",
     });
   }
 
-  const userIndex = userArray.findIndex((item) => item.id === user_id);
+  const userIndex = allUsers.findIndex((item) => item.id === user_id);
 
-  res.send(`${userArray[userIndex].allProjects}\n${userArray[userIndex].task}`);
+  res.send(
+    `All user projects : ${allUsers[userIndex].allProjects}\nAll user tasks : ${allUsers[userIndex].task}`
+  );
 };
 
-export const deleteUser = (req: Request, res: Response) => {
-  const user_id = req.params.userid;
+export const deleteUser = async (req: Request, res: Response) => {
+  const user_id = req.params.id;
 
-  if (!validator.isInt(user_id, {min: 0, max: undefined})) {
-    return res.status(404).json({
-      error_msg: "Request id invalid",
-    });
-  }
+  const userRepo = AppDataSource.getRepository(User);
+  const allUsers = await userRepo.find();
 
-  if (userArray.length < 0) {
+  if (allUsers.length < 0) {
     return res.status(204).json({
       error_msg: "Cannot find any user",
     });
   }
-  const userIndex = userArray.findIndex(
-    (item) => item.id === parseInt(user_id)
-  );
 
-  if (userIndex >= 0) {
-    userArray.splice(userIndex, 1);
-  } else {
+  const userIndex = allUsers.findIndex((item) => item.id === parseInt(user_id));
+
+  if (userIndex < 0) {
     return res.status(400).json({
       status_code: 0,
       error_msg: "Cannot delete user",
     });
   }
-  res.send(`Deleted`);
-};
+  // Create new query builder to delete user by id
+  const query = userRepo.createQueryBuilder();
+  const rs = await query
+    .delete()
+    .from(User)
+    .where("id = :id", { id: user_id })
+    .execute();
 
-export const editUser = (req: Request, res: Response) => {
-  const user_id = parseInt(req.params.userid);
-  const { name, birthday, email, active } = req.body;
-
-  if (
-    !validator.isInt(user_id, {min: 0, max: undefined}) ||
-    validator.isNumeric(name) ||
-    !validator.isEmail(email) ||
-    !validator.isBoolean(active)
-  ) {
+  if (!rs) {
     return res.status(400).json({
-      error_msg: "User information input incorrect",
+      error_msg: "Cannot delete user",
     });
   }
+  res.send(`Delete user ${user_id} successfully`);
+};
 
-  if (userArray.length < 0) {
+export const editUser = async (req: Request, res: Response) => {
+  const user_id = parseInt(req.params.id);
+  const { name, birthday, email, active } = req.body;
+
+  const userRepo = AppDataSource.getRepository(User);
+  const allUsers = await userRepo.find();
+
+  if (allUsers.length < 0) {
     return res.status(404).json({
       error_msg: "Cannot find any user",
     });
   }
 
-  const userIndex = userArray.findIndex((item) => item.id === user_id);
+  const userIndex = allUsers.findIndex((item) => item.id === user_id);
+  if (userIndex < 0) {
+    return res.status(400).json({
+      error_msg: "Cannot find user",
+    });
+  }
 
-  userArray[userIndex].name = name;
-  userArray[userIndex].birthday = birthday;
-  userArray[userIndex].email = email;
-  userArray[userIndex].active = active;
-  res.send(`Updated user ${name}`);
+  // Create new query builder to update user by id
+  const query = userRepo.createQueryBuilder();
+  const rs = await query
+    .update(User)
+    .set({
+      name: name,
+      birthday: birthday,
+      email: email,
+      active: active,
+    })
+    .where("id = :id", { id: user_id })
+    .execute();
+
+  if (!rs) {
+    return res.status(400).json({
+      error_msg: "Cannot update user",
+    });
+  }
+  res.send(`Update user ${user_id} successfully`);
 };
-

@@ -1,27 +1,35 @@
-const validator = require("validator");
-const validateDate = require("is-valid-date");
-
 import { Request, Response } from "express";
-import { projectArray } from "./project";
-import { taskArray } from "./task";
-import { statusArray } from "./status";
-import { priorArray } from "./priority";
-import { typeArray } from "./type";
-import { userArray } from "./users";
-import { isValidTask, isValidStatus } from "../validators/valid";
+import { AppDataSource } from "../data-source";
+import { Project } from "../entity/main";
+import { User } from "../entity/main";
+import { Status } from "../entity/main";
+import { Task } from "../entity/main";
+import { Type } from "../entity/main";
+import { Priority } from "../entity/main";
 
-export const userCreatePrivateTask = (req: Request, res: Response) => {
-  const req_project_id = req.body.projectid;
+const projectRepo = AppDataSource.getRepository(Project);
+const userRepo = AppDataSource.getRepository(User);
+const statusRepo = AppDataSource.getRepository(Status);
+const taskRepo = AppDataSource.getRepository(Task);
+const typeRepo = AppDataSource.getRepository(Type);
+const priorRepo = AppDataSource.getRepository(Priority);
+
+export const userCreatePrivateTask = async (req: Request, res: Response) => {
+  const project_id = req.body.req_project_id;
   const username = req.params.username;
 
-  if (!isValidStatus(username, req_project_id)) {
-    return res.status(400).json({
-      error_msg: "Project id or username invalid",
-    });
-  }
+  const allProjects = await projectRepo.find();
+  const allUsers = await userRepo.find();
+  const allStatus = await statusRepo.find();
+  const allType = await typeRepo.find();
+  const allPriors = await priorRepo.find();
 
-  const isUserInProject = projectArray.findIndex((item) =>
-    item.members.includes(username)
+  const projectIndex = allProjects.findIndex(
+    (item) => item.id === parseInt(project_id)
+  );
+
+  const isUserInProject = allProjects[projectIndex].members.findIndex((item) =>
+    item.includes(username)
   );
 
   if (isUserInProject < 0) {
@@ -30,9 +38,10 @@ export const userCreatePrivateTask = (req: Request, res: Response) => {
     });
   }
 
+  let assignee = req.body.assignee;
+
   const {
     name,
-    assignee,
     req_start_date,
     req_end_date,
     req_prior_id,
@@ -40,37 +49,17 @@ export const userCreatePrivateTask = (req: Request, res: Response) => {
     req_type_id,
   } = req.body;
 
-  if (
-    !isValidTask(
-      name,
-      assignee,
-      req_start_date,
-      req_end_date,
-      req_project_id,
-      req_prior_id,
-      req_status_id,
-      req_type_id
-    )
-  ) {
-    return res.status(400).json({
-      error_msg: "Task input invalid",
-    });
-  }
-
-  const statusIndex = statusArray.findIndex(
+  const statusIndex = allStatus.findIndex(
     (item) => item.id === parseInt(req_status_id)
   );
-  const priorityIndex = priorArray.findIndex(
+  const priorityIndex = allPriors.findIndex(
     (item) => item.id === parseInt(req_prior_id)
   );
-  const typeIndex = typeArray.findIndex(
+  const typeIndex = allType.findIndex(
     (item) => item.id === parseInt(req_type_id)
   );
-  const projectIndex = projectArray.findIndex(
-    (item) => item.id === parseInt(req_project_id)
-  );
 
-  const assigneeIndex = userArray.findIndex(
+  const assigneeIndex = allUsers.findIndex(
     (item) => item.username === username
   );
 
@@ -80,171 +69,181 @@ export const userCreatePrivateTask = (req: Request, res: Response) => {
     });
   }
 
-  if (assignee === undefined || assignee === "") {
-    assignee === "Me";
-  }
-
-  const req_start_date_valid = validateDate(req_start_date);
-  const req_end_date_valid = validateDate(req_end_date);
-
-
-  if (!req_start_date_valid || !req_end_date_valid) {
-    return res.status(400).json({
-      error_msg: "Date invalid",
-    });
+  if (assignee === undefined || assignee === "" || assignee === "Me") {
+    assignee = username;
   }
 
   if (projectIndex >= 0) {
     const tasks = {
-      id: taskArray.length + 1,
       taskName: name,
-      assignee: username,
+      assignee: assignee,
       start_date: req_start_date,
       end_date: req_end_date,
-      project: projectArray[projectIndex],
-      type: typeArray[typeIndex],
-      status: statusArray[statusIndex],
-      priority: priorArray[priorityIndex],
+      project: allProjects[projectIndex],
+      type: allType[typeIndex],
+      status: allStatus[statusIndex],
+      priority: allPriors[priorityIndex],
     };
-    userArray[assigneeIndex].task.push(tasks.taskName);
-    projectArray[projectIndex].tasks.push(tasks.taskName);
-    taskArray.push(tasks);
+    //insert task
+    const rs = await AppDataSource.createQueryBuilder()
+      .insert()
+      .into(Task)
+      .values(tasks)
+      .execute();
+    if (rs) {
+      return res.status(200).json({
+        message: "Create task successfully",
+        data: tasks,
+      });
+    } else {
+      return res.status(400).json({
+        error_msg: "Create task failed",
+      });
+    }
   } else {
-    return res.status(400).json({
-      error_msg: "Cannot create task",
+    return res.status(404).json({
+      error_msg: "Cannot find project",
     });
   }
-  res.send(taskArray);
 };
 
-export const userEditPrivateTask = (req: Request, res: Response) => {
-  const project_id = parseInt(req.params.projectid);
+export const userEditPrivateTask = async (req: Request, res: Response) => {
   const username = req.params.username;
-  const task_id = parseInt(req.params.taskid);
+  const task_id = parseInt(req.params.id);
 
-  if (
-    !isValidStatus(username, project_id) ||
-    validator.isInt(task_id, { min: 1, max: undefined })
-  ) {
-    return res.status(400).json({
-      error_msg: "Request id or username invalid",
-    });
-  }
+  const allProjects = await projectRepo.find();
+  const allStatus = await statusRepo.find();
+  const allType = await typeRepo.find();
+  const allPriors = await priorRepo.find();
+  const allTasks = await taskRepo.find();
 
-  const isUserInProject = projectArray.findIndex((item) =>
-    item.members.includes(username)
-  );
-
-  if (isUserInProject < 0) {
-    return res.status(404).json({
-      error_msg: "User not in project",
-    });
-  }
-  let assignee: string = "";
+  let assignee = req.body.assignee;
   const {
     name,
     req_start_date,
     req_end_date,
     req_prior_id,
     req_status_id,
+    req_project_id,
     req_type_id,
   } = req.body;
 
-
-  const statusIndex = statusArray.findIndex(
+  const statusIndex = allStatus.findIndex(
     (item) => item.id === parseInt(req_status_id)
   );
-  const priorityIndex = priorArray.findIndex(
+  const priorityIndex = allPriors.findIndex(
     (item) => item.id === parseInt(req_prior_id)
   );
-  const typeIndex = typeArray.findIndex(
+  const typeIndex = allType.findIndex(
     (item) => item.id === parseInt(req_type_id)
   );
-  const projectIndex = projectArray.findIndex(
-    (item) => item.id === project_id
+  const projectIndex = allProjects.findIndex(
+    (item) => item.id === parseInt(req_project_id)
   );
-  const userIndex = userArray.findIndex((item) => item.username === username);
 
   if (assignee === "" || assignee === undefined) {
     assignee = "Me";
   }
 
-  const index = taskArray.findIndex((item) => item.id === task_id);
+  const index = allTasks.findIndex((item) => item.id === task_id);
 
   if (index >= 0) {
-    taskArray[index].taskName = name;
-    taskArray[index].assignee = assignee;
-    taskArray[index].start_date = req_start_date;
-    taskArray[index].end_date = req_end_date;
-    taskArray[index].project = projectArray[projectIndex];
-    taskArray[index].priority = priorArray[priorityIndex];
-    taskArray[index].status = statusArray[statusIndex];
-    taskArray[index].type = typeArray[typeIndex];
+    if (assignee === "Me") {
+      assignee = username;
+    }
+    const tasks = {
+      taskName: name,
+      assignee: assignee,
+      start_date: req_start_date,
+      end_date: req_end_date,
+      project: allProjects[projectIndex],
+      type: allType[typeIndex],
+      status: allStatus[statusIndex],
+      priority: allPriors[priorityIndex],
+    };
+    //update task
+    const rs = await AppDataSource.createQueryBuilder()
+      .update(Task)
+      .set(tasks)
+      .where("id = :id", { id: task_id })
+      .execute();
+    if (rs) {
+      return res.status(200).json({
+        message: "Update task successfully",
+        data: tasks,
+      });
+    } else {
+      return res.status(400).json({
+        error_msg: "Update task failed",
+      });
+    }
+  } else {
+    return res.status(404).json({
+      error_msg: "Cannot find task",
+    });
   }
-
-  if (assignee === username) {
-    userArray[userIndex].task[task_id] === name;
-  }
-  projectArray[projectIndex].tasks[task_id] === name;
-  res.send(taskArray[index]);
 };
 
-export const userDeletePrivateTask = (req: Request, res: Response) => {
+export const userDeletePrivateTask = async (req: Request, res: Response) => {
   const username = req.params.username;
-  const task_id = req.params.taskid;
+  const task_id = req.params.id;
 
-  if (validator.isNumeric(username) || !validator.isInt(task_id, { min: 1 })) {
+  const allTasks = await taskRepo.find();
+
+  const taskIndex = allTasks.findIndex((item) => item.assignee === username);
+
+  console.log(taskIndex);
+
+  if (taskIndex >= 0) {
+    //delete task
+    const rs = await AppDataSource.createQueryBuilder()
+      .delete()
+      .from(Task)
+      .where("id = :id", { id: task_id })
+      .execute();
+    if (rs) {
+      return res.status(200).json({
+        message: "Delete task successfully",
+      });
+    }
+
     return res.status(400).json({
-      error_msg: "Username or task name incorrect",
+      error_msg: "Delete task failed",
     });
-  }
-
-  const userIndex = userArray.findIndex((item) => item.username === username);
-
-  const isUserInProject = projectArray.findIndex((item) =>
-    item.members.includes(username)
-  );
-
-  const taskIndex = userArray[userIndex].task.findIndex(
-    (item) => item === task_id
-  );
-  const taskArrIndex = taskArray.findIndex((item) => item.assignee === username);
-
-  if (isUserInProject < 0) {
-    return res.status(404).json({
-      error_msg: "User not in project",
-    });
-  }
-
-  if (taskArrIndex >= 0) {
-    userArray[userIndex].task.splice(taskIndex, 1);
-    taskArray[taskArrIndex].assignee === "";
   } else {
     return res.status(400).json({
       error_msg: "Cannot delete task",
     });
   }
-  res.send(`Deleted, user's tasks now remain: ${userArray[userIndex].task}`);
 };
 
-export const allUserTask = (req: Request, res: Response) => {
-  const user_id = req.params.userid;
+export const allUserTask = async (req: Request, res: Response) => {
+  const user_id = req.params.id;
 
-  if (!validator.isInt(user_id, { min: 1, max: undefined })) {
-    return res.status(400).json({
-      error_msg: "Request id invalid",
-    });
-  }
-
-  const userIndex = userArray.findIndex(
-    (item) => item.id === parseInt(user_id)
-  );
+  const allUsers = await userRepo.find();
+  const userIndex = allUsers.findIndex((item) => item.id === parseInt(user_id));
 
   if (userIndex >= 0) {
-    res.send(`All tasks: ${userArray[userIndex].task}`);
+    const users = await AppDataSource.createQueryBuilder()
+      .select("task")
+      .from(Task, "task")
+      .where("task.assignee = :assignee", {
+        assignee: allUsers[userIndex].username,
+      })
+      .getMany();
+    if (users) {
+      return res.status(200).json({
+        message: "Get all tasks successfully",
+        data: users,
+      });
+    } else {
+      return res.status(400).json({
+        error_msg: "Get all tasks failed",
+      });
+    }
   } else {
     return res.status(404).json({
-      error_msg: "User not found",
+      error_msg: "Cannot find user",
     });
   }
 };

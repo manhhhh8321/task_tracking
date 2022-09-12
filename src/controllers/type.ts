@@ -1,23 +1,17 @@
-
 import { Response, Request, NextFunction } from "express";
 import { IType } from "../interfaces/main";
-
-
+import { AppDataSource } from "../data-source";
+import { Type } from "../entity/main";
 
 export const typeArray: IType[] = [];
 
 const createType = async (req: Request, res: Response) => {
   const { name, req_color } = req.body;
 
-  const types: IType = {
-    id: typeArray.length + 1,
-    defaultColor: "white",
-    color: req_color,
-    typeName: name,
-    visible: true,
-  };
+  const typeRepo = AppDataSource.getRepository(Type);
+  const allTypes = await typeRepo.find();
 
-  const index = typeArray.findIndex(item => item.typeName === name);
+  const index = allTypes.findIndex((item) => item.typeName === name);
 
   if (index >= 0) {
     return res.status(409).json({
@@ -25,15 +19,22 @@ const createType = async (req: Request, res: Response) => {
     });
   }
 
-  if (req.body) {
-    typeArray.push(types);
-  } else {
-    return res.status(400).json({
-      error_msg: "Invalid info",
+  // Create new query builder to create new type
+  const types = new Type();
+  types.typeName = name;
+  types.color = req_color;
+  types.visible = true;
+  types.defaultColor = "white";
+
+  // Save to database
+  const rs = await typeRepo.save(types);
+  if (!rs) {
+    return res.status(500).json({
+      error_msg: "Cannot create type",
     });
   }
 
-  for (let el of typeArray) {
+  for (let el of allTypes) {
     if (el.typeName === "default") {
       el.defaultColor = "white";
     }
@@ -45,48 +46,86 @@ const createType = async (req: Request, res: Response) => {
     }
   }
 
-  res.send(typeArray);
+  res.send(rs);
 };
 
-const viewAllType = (req: Request, res: Response) => {
-  if (typeArray.length > 0) {
-    res.json(typeArray);
-  } else {
+const viewAllType = async (req: Request, res: Response) => {
+  const typeRepo = AppDataSource.getRepository(Type);
+  const allTypes = await typeRepo.find();
+
+  if (allTypes.length <= 0) {
     return res.status(204).json({
       error_msg: "No content found",
     });
   }
-  res.send(typeArray);
+  res.json(allTypes);
 };
 
-const editType = (req: Request, res: Response, next: NextFunction) => {
+const editType = async (req: Request, res: Response, next: NextFunction) => {
   const { name, req_color } = req.body;
   const id = parseInt(req.params.id);
-  let index = typeArray.findIndex((item) => item.id === id);
 
-  if (index >= 0) {
-    typeArray[index].typeName = name;
-    typeArray[index].color = req_color;
-  } else {
+  const typeRepo = AppDataSource.getRepository(Type);
+  const allTypes = await typeRepo.find();
+
+  let index = allTypes.findIndex((item) => item.id === id);
+
+  if (index < 0) {
     return res.status(404).json({
       error_msg: "Cannot find type name",
     });
   }
-  res.send(typeArray[index]);
+  // Create new query builder to update type
+  const query = typeRepo
+    .createQueryBuilder()
+    .update(Type)
+    .set({ typeName: name, color: req_color })
+    .where("id = :id", { id: id })
+    .execute();
+  query
+    .then((result) => {
+      if (result.affected === 0) {
+        return res.status(500).json({
+          error_msg: "Cannot update type",
+        });
+      }
+      res.send(`Type ${id} has been updated`);
+      // Save to database
+    })
+    .catch((err) => {
+      next(err);
+    });
 };
 
-const setVisibleType = (req: Request, res: Response) => {
-  const req_id = (req.params.id);
+const setVisibleType = async (req: Request, res: Response) => {
+  const req_id = req.params.id;
 
-  const index = typeArray.findIndex((item) => item.id === parseInt(req_id));
-  if (index >= 0) {
-    typeArray[index].visible = !typeArray[index].visible;
-  } else {
+  const typeRepo = AppDataSource.getRepository(Type);
+  const allTypes = await typeRepo.find();
+  const index = allTypes.findIndex((item) => item.id === parseInt(req_id));
+
+  if (index < 0) {
     return res.status(404).json({
       error_msg: "Cannot find type id",
     });
   }
-  res.send(typeArray[index]);
+  // Create new query builder to update type visible
+  const query = typeRepo.createQueryBuilder();
+  query
+    .update(Type)
+    .set({ visible: false })
+    .where("id = :id", { id: req_id })
+    .execute();
+
+  // Save to database
+  const rs = await typeRepo.save(allTypes[index]);
+  if (!rs) {
+    return res.status(500).json({
+      error_msg: "Cannot update type",
+    });
+  }
+
+  res.send(`Type ${req_id} has been updated`);
 };
 
 export { createType, viewAllType, editType, setVisibleType };

@@ -38,7 +38,7 @@ app.use("/task", adminAuth, taskRouter);
 app.use("/user", adminAuth, userRouter);
 
 //Users_project
-app.use("/projects", userAuth, userProjectRouter);
+app.use("/projects", userProjectRouter);
 //User_task_actions
 app.use("/", adminAuth, userPrivateTaskRouter);
 
