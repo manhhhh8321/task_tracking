@@ -14,12 +14,12 @@ const userPrivateTaskRouter = express.Router();
 
 userPrivateTaskRouter.get("/:id/task", validateParamId, allUserTask);
 userPrivateTaskRouter.post(
-  "/:id/task",
+  "/:username/:id/task",
   validateParamId,
   validateTask,
   userCreatePrivateTask
 );
-userPrivateTaskRouter.delete("/:username/task", userDeletePrivateTask);
+userPrivateTaskRouter.delete("/:username/:id", userDeletePrivateTask);
 userPrivateTaskRouter.put(
   "/:username/:id",
   validateUsernameAndParamsId,

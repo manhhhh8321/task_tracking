@@ -15,9 +15,11 @@ import {
   validateUserCreateTask,
   validateUsernameAndParamsId,
 } from "../middlewares/validations";
+import { userAuth } from "../middlewares/auth";
+import { isValidUserCreateTask } from "../validators/valid";
 const userProjectRouter = express.Router();
 
-userProjectRouter.get("/:id", validateParamId, userJoinedProject);
+userProjectRouter.get("/:id", validateParamId, userAuth, userJoinedProject);
 userProjectRouter.get(
   "/:username/:id",
   validateUsernameAndParamsId,
@@ -35,14 +37,13 @@ userProjectRouter.post(
   createTaskForUser
 );
 userProjectRouter.put(
-  "/:username/:projectid/:taskid",
+  "/:username/:project_id/:task_id",
   validateProjectIdAndTaskId,
-  validateTask,
+  validateUserCreateTask,
   userEditTask
 );
 userProjectRouter.delete(
-  "/:username/task",
-  validateParamsUserNameAndBodyTaskName,
+  "/:username/:task_id",
   userDeleteTask
 );
 
