@@ -4,7 +4,10 @@
   "description": "",
   "main": "dist/app.js",
   "scripts": {
-    "dev": "nodemon ./src/app.ts"
+    "dev": "nodemon ./src/app.ts",
+    "migrate:create": "ts-node ./node_modules/typeorm/cli.js migration:create",
+    "migrate:up": "ts-node ./node_modules/typeorm/cli.js migration:run",
+    "migrate:down": "ts-node ./node_modules/typeorm/cli.js migration:revert"
   },
   "keywords": [],
   "author": "",
