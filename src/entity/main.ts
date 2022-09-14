@@ -2,8 +2,6 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  OneToOne,
-  JoinColumn,
   PrimaryColumn,
   OneToMany,
   ManyToOne,
@@ -12,12 +10,10 @@ import {
 } from "typeorm";
 import {
   IProject,
-  Users,
   IPriority,
   IStatus,
   ITask,
   IType,
-  Admins,
 } from "../interfaces/main";
 
 @Entity()

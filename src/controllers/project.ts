@@ -1,7 +1,6 @@
 import { Response, Request, NextFunction } from "express";
 import { IProject } from "../interfaces/main";
 import slug from "slug";
-import { userArray } from "./users";
 import { Project, Task, User } from "../entity/main";
 import { AppDataSource } from "../data-source";
 
@@ -175,6 +174,7 @@ export const addMemberToProject = async (req: Request, res: Response) => {
 
     allProject[projectIndex].members.push(user?.username as string);
     allUsers[userIndex].allProjects.push(project?.projectName as string);
+    
 
     await transactionalEntityManager.save(Project, allProject[projectIndex]);
     await transactionalEntityManager.save(User, allUsers[userIndex]);

@@ -1,11 +1,10 @@
-const validator = require("validator");
+
 const uniqid = require("uniqid");
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
 
 import { Users } from "../interfaces/main";
 import { Request, Response } from "express";
-import { projectArray } from "./project";
 import { Project, User } from "../entity/main";
 import { AppDataSource } from "../data-source";
 import { Invite } from "../entity/main";

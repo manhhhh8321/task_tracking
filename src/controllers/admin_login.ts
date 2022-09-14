@@ -1,6 +1,4 @@
 import { Response, Request, NextFunction } from "express";
-import { Admins } from "../interfaces/main";
-import { userArray } from "./users";
 import { AppDataSource } from "../data-source";
 import { Admin, User } from "../entity/main";
 

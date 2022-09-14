@@ -1,14 +1,8 @@
-import { Users } from "../interfaces/main";
-import { Request, Response } from "express";
-import { projectArray } from "./project";
-import { taskArray } from "./task";
-import { statusArray } from "./status";
-import { priorArray } from "./priority";
-import { typeArray } from "./type";
 
+import { Request, Response } from "express";
+import { taskArray } from "./task";
 import { AppDataSource } from "../data-source";
 import { Status, Priority, Task, Type, User, Project } from "../entity/main";
-import { EntityManager } from "typeorm";
 
 const userRepo = AppDataSource.getRepository(User);
 const projectRepo = AppDataSource.getRepository(Project);
