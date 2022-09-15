@@ -1,19 +1,15 @@
 import { Response, Request, NextFunction } from "express";
-import { IType } from "../interfaces/main";
+
 import { AppDataSource } from "../data-source";
 import { Type } from "../entity/main";
-
-export const typeArray: IType[] = [];
 
 const createType = async (req: Request, res: Response) => {
   const { name, req_color } = req.body;
 
   const typeRepo = AppDataSource.getRepository(Type);
-  const allTypes = await typeRepo.find();
+  const type = await typeRepo.findOne({ where: { typeName: name } });
 
-  const index = allTypes.findIndex((item) => item.typeName === name);
-
-  if (index >= 0) {
+  if (type) {
     return res.status(409).json({
       error_msg: "Type name existed",
     });
@@ -34,6 +30,7 @@ const createType = async (req: Request, res: Response) => {
     });
   }
 
+  const allTypes = await typeRepo.find();
   for (let el of allTypes) {
     if (el.typeName === "default") {
       el.defaultColor = "white";
@@ -66,13 +63,11 @@ const editType = async (req: Request, res: Response, next: NextFunction) => {
   const id = parseInt(req.params.id);
 
   const typeRepo = AppDataSource.getRepository(Type);
-  const allTypes = await typeRepo.find();
+  const type = await typeRepo.findOne({ where: { id: id } });
 
-  let index = allTypes.findIndex((item) => item.id === id);
-
-  if (index < 0) {
+  if (!type) {
     return res.status(404).json({
-      error_msg: "Cannot find type name",
+      error_msg: "Cannot find type id",
     });
   }
   // Create new query builder to update type
@@ -101,10 +96,9 @@ const setVisibleType = async (req: Request, res: Response) => {
   const req_id = req.params.id;
 
   const typeRepo = AppDataSource.getRepository(Type);
-  const allTypes = await typeRepo.find();
-  const index = allTypes.findIndex((item) => item.id === parseInt(req_id));
+  const type = await typeRepo.findOne({ where: { id: parseInt(req_id) } });
 
-  if (index < 0) {
+  if (!type) {
     return res.status(404).json({
       error_msg: "Cannot find type id",
     });
@@ -113,19 +107,20 @@ const setVisibleType = async (req: Request, res: Response) => {
   const query = typeRepo.createQueryBuilder();
   query
     .update(Type)
-    .set({ visible: false })
+    .set({ visible: !type!.visible })
     .where("id = :id", { id: req_id })
-    .execute();
-
-  // Save to database
-  const rs = await typeRepo.save(allTypes[index]);
-  if (!rs) {
-    return res.status(500).json({
-      error_msg: "Cannot update type",
+    .execute()
+    .then((result) => {
+      if (result.affected === 0) {
+        return res.status(500).json({
+          error_msg: "Cannot update type",
+        });
+      }
+    })
+    .catch((err) => {
+      throw err;
     });
-  }
-
-  res.send(`Type ${req_id} has been updated`);
+    res.send(`Type ${req_id} has been updated`);
 };
 
 export { createType, viewAllType, editType, setVisibleType };

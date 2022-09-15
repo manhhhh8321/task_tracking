@@ -7,25 +7,30 @@ import {
   ManyToOne,
   ManyToMany,
   JoinTable,
+  Unique,
 } from "typeorm";
-import {
-  IProject,
-  IPriority,
-  IStatus,
-  ITask,
-  IType,
-} from "../interfaces/main";
+import { IProject, IPriority, IStatus, ITask, IType } from "../interfaces/main";
 
 @Entity()
 export class Admin {
-  @PrimaryColumn()
+  @PrimaryGeneratedColumn()
+  id: number;
+  @Column({ unique: true })
   username: string;
 
   @Column()
   password: string;
 
-  @Column()
-  role: string;
+  @Column() name: string;
+  @Column() birthday: string;
+  @Column() inviteID: string;
+  @Column() defaultProject: string;
+  @Column("simple-array") allProjects: string[];
+  @Column() active: boolean;
+  @Column({ unique: true }) email: string;
+  //Create one to many relationship with task entity
+  @OneToMany(() => Task, (task) => task.user, { onDelete: "CASCADE" })
+  task: Task[];
 }
 
 //Create entity class for project that implements IProject interface
@@ -38,7 +43,7 @@ export class Project implements IProject {
   @Column() end_date: string;
   @Column() slug: string;
   @Column("simple-array") task_closed: string[];
-  @ManyToMany((type) => User, (user) => user.allProjects)
+  @ManyToMany((type) => User, (user) => user.allProjects, { cascade: true })
   @JoinTable()
   users: User[];
   // Create one to many relation with task entity
@@ -76,6 +81,7 @@ export class Status implements IStatus {
   // Create many to one relationship with task entity
   @OneToMany(() => Task, (task) => task.status, { onDelete: "CASCADE" })
   tasks: Task[];
+  @Column() isDefault: boolean;
 }
 
 //Create entity class for priority that implements IPriority interface

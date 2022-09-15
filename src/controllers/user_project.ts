@@ -1,6 +1,5 @@
-
 import { Request, Response } from "express";
-import { taskArray } from "./task";
+
 import { AppDataSource } from "../data-source";
 import { Status, Priority, Task, Type, User, Project } from "../entity/main";
 
@@ -14,43 +13,44 @@ const typeRepo = AppDataSource.getRepository(Type);
 export const userJoinedProject = async (req: Request, res: Response) => {
   const userId = parseInt(req.params.id);
 
-  const allUsers = await userRepo.find();
+  const user = await userRepo.findOne({ where: { id: userId } });
 
-  const userIndex = allUsers.findIndex((item) => item.id === userId);
-
-  if (userIndex >= 0) {
-    res.send(
-      `All projects of ${allUsers[userIndex].username}: ${allUsers[userIndex].allProjects}`
-    );
-  } else {
+  if (!user) {
     return res.status(404).json({
-      error_msg: "User not found",
+      error_msg: "Cannot find user",
     });
   }
+  res.send(`All projects of ${user.username}: ${user.allProjects}`);
 };
 
 export const userDetailProject = async (req: Request, res: Response) => {
   const username = req.params.username;
   const projectId = req.params.id;
-
-  const allProjects = await projectRepo.find();
-  const allUsers = await userRepo.find();
-
   const pushArray = [];
-  const isUserInProject = allProjects.findIndex((item) =>
-    item.members.includes(username)
-  );
 
-  if (isUserInProject < 0) {
+  const user = await userRepo.findOne({ where: { username: username } });
+
+  if (!user) {
+    return res.status(404).json({
+      error_msg: "Cannot find user",
+    });
+  }
+
+  const project = await projectRepo.findOne({
+    where: { id: parseInt(projectId) },
+  });
+
+  if (!project) {
+    return res.status(404).json({
+      error_msg: "Cannot find project",
+    });
+  }
+
+  if (!user?.allProjects.includes(project!?.projectName)) {
     return res.status(404).json({
       error_msg: "User not in project",
     });
   }
-
-  const userIndex = allUsers.findIndex((item) => item.username === username);
-  const projectIndex = allProjects.findIndex(
-    (item) => item.id === parseInt(projectId)
-  );
 
   // Find task by username and project id
   const allTasks = await taskRepo.find({
@@ -63,22 +63,20 @@ export const userDetailProject = async (req: Request, res: Response) => {
       item.assignee === username && item.project.id === parseInt(projectId)
   ).length;
 
-  if (userIndex >= 0 && projectIndex >= 0) {
-    const currentTask = countTask;
-    const closedTask = allProjects[projectIndex].task_closed.length;
-    const obj = {
-      projectName: allProjects[projectIndex].projectName,
-      allTasks: currentTask + closedTask,
-      closedTasks: closedTask,
-      // Check process if it is number or not, if not then return 0
-      process: isNaN((closedTask / currentTask) * 100)
-        ? 0
-        : (closedTask / currentTask) * 100,
-      start_date: allProjects[projectIndex].start_date,
-      end_date: allProjects[projectIndex].end_date,
-    };
-    pushArray.push(obj);
-  }
+  const currentTask = countTask;
+  const closedTask = project.task_closed.length;
+  const obj = {
+    projectName: project.projectName,
+    allTasks: currentTask + closedTask,
+    closedTasks: closedTask,
+    // Check process if it is number or not, if not then return 0
+    process: isNaN((closedTask / currentTask) * 100)
+      ? 0
+      : (closedTask / currentTask) * 100,
+    start_date: project.start_date,
+    end_date: project.end_date,
+  };
+  pushArray.push(obj);
   res.send(pushArray);
 };
 
@@ -86,21 +84,32 @@ export const allTaskOfUserProject = async (req: Request, res: Response) => {
   const username = req.params.username;
   const projectId = req.params.id;
 
-  const allProjects = await projectRepo.find();
+  const user = await userRepo.findOne({ where: { username: username } });
   const allStatus = await statusRepo.find();
-  const allTasks = await taskRepo.find({ relations: ["status"] });
 
-  const projectIndex = allProjects.findIndex(
-    (item) => item.id === parseInt(projectId)
-  );
+  if (allStatus.length <= 0) {
+    return res.status(404).json({
+      error_msg: "Not any status",
+    });
+  }
 
-  const isUserInProject = allProjects[projectIndex].members.includes(username);
+  const project = await projectRepo.findOne({
+    where: { id: parseInt(projectId) },
+  });
 
-  if (!isUserInProject) {
+  if (!user || !project) {
+    return res.status(404).json({
+      error_msg: "Cannot find user || project",
+    });
+  }
+
+  if (!user?.allProjects.includes(project?.projectName)) {
     return res.status(404).json({
       error_msg: "User not in project",
     });
   }
+
+  const allTasks = await taskRepo.find({ relations: ["status"] });
 
   const statusArr = allStatus.map((item) => item.statusName);
   const obj: Record<string, any> = {};
@@ -128,24 +137,6 @@ export const createTaskForUser = async (req: Request, res: Response) => {
   const req_project_id = req.params.id;
   const username = req.params.username;
 
-  const allProjects = await projectRepo.find();
-  const allUsers = await userRepo.find();
-  const allStatus = await statusRepo.find();
-  const allPrior = await priorRepo.find();
-  const allType = await typeRepo.find();
-
-  const projectIndex = allProjects.findIndex(
-    (item) => item.id === parseInt(req_project_id)
-  );
-
-  const isUserInProject = allProjects[projectIndex].members.includes(username);
-
-  if (!isUserInProject) {
-    return res.status(404).json({
-      error_msg: "User not in project",
-    });
-  }
-
   const {
     name,
     req_start_date,
@@ -155,56 +146,33 @@ export const createTaskForUser = async (req: Request, res: Response) => {
     req_type_id,
   } = req.body;
 
-  const statusIndex = allStatus.findIndex(
-    (item) => item.id === parseInt(req_status_id)
-  );
-  const priorityIndex = allPrior.findIndex(
-    (item) => item.id === parseInt(req_prior_id)
-  );
-  const typeIndex = allType.findIndex(
-    (item) => item.id === parseInt(req_type_id)
-  );
-
-  const assigneeIndex = allUsers.findIndex(
-    (item) => item.username === username
-  );
-
-  if (assigneeIndex < 0) {
-    return res.status(404).json({
-      error_msg: "Cannot find user",
-    });
-  }
-
-  if (projectIndex < 0) {
-    return res.status(409).json({
-      error_msg: "Cannot create task",
-    });
-  }
-
-  const tasks = {
-    id: taskArray.length + 1,
-    taskName: name,
-    assignee: username,
-    start_date: req_start_date,
-    end_date: req_end_date,
-    project: allProjects[projectIndex],
-    type: allType[typeIndex],
-    status: allStatus[statusIndex],
-    priority: allPrior[priorityIndex],
-  };
+  const user = await userRepo.findOne({ where: { username: username } });
+  const project = await projectRepo.findOne({
+    where: { id: parseInt(req_project_id) },
+  });
+  const status = await statusRepo.findOne({
+    where: { id: parseInt(req_status_id) },
+  });
+  const prior = await priorRepo.findOne({
+    where: { id: parseInt(req_prior_id) },
+  });
+  const type = await typeRepo.findOne({
+    where: { id: parseInt(req_type_id) },
+  });
 
   // Create transaction to create new tasks then update user id in task table
   await AppDataSource.createEntityManager().transaction(
     async (transactionalEntityManager) => {
       const newTask = new Task();
-      newTask.taskName = tasks.taskName;
-      newTask.assignee = tasks.assignee;
-      newTask.start_date = tasks.start_date;
-      newTask.end_date = tasks.end_date;
-      newTask.project = tasks.project;
-      newTask.type = tasks.type;
-      newTask.status = tasks.status;
-      newTask.priority = tasks.priority;
+      newTask.taskName = name;
+      newTask.assignee = username;
+      newTask.start_date = req_start_date;
+      newTask.end_date = req_end_date;
+      newTask.project = project!;
+      newTask.type = type!;
+      newTask.status = status!;
+      newTask.priority = prior!;
+      newTask.user = user!;
 
       await transactionalEntityManager.save(newTask);
 
@@ -215,8 +183,7 @@ export const createTaskForUser = async (req: Request, res: Response) => {
 
       // Update user id in task table
       if (task) {
-        task.user = allUsers[assigneeIndex];
-
+        task.user = user!;
         await transactionalEntityManager.save(task);
       }
 
@@ -232,24 +199,6 @@ export const userEditTask = async (req: Request, res: Response) => {
   const username = req.params.username;
   const task_id = parseInt(req.params.task_id);
 
-  const allProjects = await projectRepo.find();
-  const allUsers = await userRepo.find();
-  const allStatus = await statusRepo.find();
-  const allPrior = await priorRepo.find();
-  const allType = await typeRepo.find();
-  const allTasks = await taskRepo.find();
-
-  const projectIndex = allProjects.findIndex(
-    (item) => item.id === parseInt(project_id)
-  );
-  const isUserInProject = allProjects[projectIndex].members.includes(username);
-
-  if (!isUserInProject) {
-    return res.status(404).json({
-      error_msg: "User not in project",
-    });
-  }
-
   const {
     name,
     assignee,
@@ -260,61 +209,88 @@ export const userEditTask = async (req: Request, res: Response) => {
     req_type_id,
   } = req.body;
 
-  const statusIndex = allStatus.findIndex(
-    (item) => item.id === parseInt(req_status_id)
-  );
-  const priorityIndex = allPrior.findIndex(
-    (item) => item.id === parseInt(req_prior_id)
-  );
-  const typeIndex = allType.findIndex(
-    (item) => item.id === parseInt(req_type_id)
-  );
+  const user = await userRepo.findOne({ where: { username: username } });
+  const newAssignee = await userRepo.findOne({ where: { username: assignee } });
 
-  const userIndex = allUsers.findIndex((item) => item.username === username);
-  const taskIndex = allTasks.findIndex((item) => item.id === task_id);
+  if (!newAssignee) {
+    return res.status(404).json({
+      error_msg: "Cannot find new assignee",
+    });
+  }
 
-  if (taskIndex < 0) {
+  const project = await projectRepo.findOne({
+    where: { id: parseInt(project_id) },
+  });
+  const status = await statusRepo.findOne({
+    where: { id: parseInt(req_status_id) },
+  });
+  const prior = await priorRepo.findOne({
+    where: { id: parseInt(req_prior_id) },
+  });
+  const type = await typeRepo.findOne({
+    where: { id: parseInt(req_type_id) },
+  });
+
+  const task = await taskRepo.findOne({
+    where: { id: task_id },
+    relations: ["project", "status", "priority", "type", "user"],
+  });
+
+  if (!user || !project) {
+    return res.status(404).json({
+      error_msg: "Cannot find user || project",
+    });
+  }
+
+  if (!user?.allProjects.includes(project?.projectName)) {
+    return res.status(404).json({
+      error_msg: "User not in project",
+    });
+  }
+
+  if (!task) {
     return res.status(404).json({
       error_msg: "Cannot find task",
     });
   }
 
-  if (userIndex < 0) {
-    return res.status(404).json({
-      error_msg: "Cannot find user",
+  if (!task.assignee.includes(username)) {
+    return res.status(409).json({
+      error_msg: "User don't have this task",
     });
   }
 
-  if (projectIndex < 0) {
-    return res.status(409).json({
-      error_msg: "Cannot find project",
+  if (!status || !prior || !type) {
+    return res.status(404).json({
+      error_msg: "Cannot find status || prior || type",
     });
   }
 
   // Create new  query builder ti update task for user, project, user
-  const transaction = await AppDataSource.transaction(async (manager) => {
-    const task = allTasks[taskIndex];
-
-    if (task) {
-      task.taskName = name;
-      task.assignee = assignee;
-      task.start_date = req_start_date;
-      task.end_date = req_end_date;
-      task.type = allType[typeIndex];
-      task.status = allStatus[statusIndex];
-      task.priority = allPrior[priorityIndex];
-      await manager.save(task);
-    }
-
-    return task;
-  });
-
-  if (!transaction) {
-    return res.status(409).json({
-      error_msg: "Cannot update task",
+  await AppDataSource.createQueryBuilder()
+    .update(Task)
+    .set({
+      taskName: name,
+      assignee: assignee,
+      start_date: req_start_date,
+      end_date: req_end_date,
+      type: type,
+      status: status,
+      priority: prior,
+      user: newAssignee,
+    })
+    .where("id = :id", { id: task_id })
+    .execute()
+    .then(() => {
+      return res.status(200).json({
+        success_msg: "Update task successfully",
+      });
+    })
+    .catch((err) => {
+      return res.status(500).json({
+        error_msg: "Update task failed",
+      });
     });
-  }
-  res.send(transaction);
 };
 
 export const userDeleteTask = async (req: Request, res: Response) => {
@@ -322,48 +298,51 @@ export const userDeleteTask = async (req: Request, res: Response) => {
   const task_id = req.params.task_id;
   const project_id = req.body.project_id;
 
-  const allUsers = await userRepo.find();
-  const allTasks = await taskRepo.find();
-  const allProjects = await projectRepo.find();
+  const user = await userRepo.findOne({ where: { username: username } });
+  const project = await projectRepo.findOne({
+    where: { id: parseInt(project_id) },
+  });
 
-  const userIndex = allUsers.findIndex((item) => item.username === username);
-  const projectIndex = allProjects.findIndex( (item) => item.id === parseInt(project_id));
+  if (!user || !project) {
+    return res.status(404).json({
+      error_msg: "Cannot find user || project",
+    });
+  }
 
-  const isUserInProject = allProjects[projectIndex].members.findIndex((item) =>
-    item.includes(username)
-  );  
-
-  const taskIndex = allTasks.findIndex((item) => item.id === parseInt(task_id));
-
-  const taskArrIndex = allTasks.findIndex((item) => item.assignee === username);
-
-  if (isUserInProject < 0) {
+  if (!user?.allProjects.includes(project?.projectName)) {
     return res.status(404).json({
       error_msg: "User not in project",
     });
   }
 
-  if (taskArrIndex < 0) {
-    return res.status(400).json({
-      status_code: 0,
-      error_msg: "Cannot delete task",
+  const task = await taskRepo.findOne({
+    where: { id: parseInt(task_id) },
+    relations: ["project", "status", "priority", "type", "user"],
+  });
+
+  if (!task) {
+    return res.status(404).json({
+      error_msg: "Cannot find task",
+    });
+  }
+
+  if (!task.assignee.includes(username)) {
+    return res.status(409).json({
+      error_msg: "User don't have this task",
     });
   }
 
   // Delete task of user then update project, task
-  const transaction = await AppDataSource.transaction(async (manager) => {
-    const task = allTasks[taskIndex];
-
-    if (task) {
-      await manager.remove(task);
-    }
-    return task;
-  });
-
-  if (!transaction) {
-    return res.status(400).json({
-      error_msg: "Cannot delete task",
+  await AppDataSource.createQueryBuilder()
+    .delete()
+    .from(Task)
+    .where("id = :id", { id: task_id })
+    .execute()
+    .catch((err) => {
+      return res.status(500).json({
+        error_msg: "Delete task failed",
+      });
     });
-  }
+
   res.send(`Delete task successfully`);
 };

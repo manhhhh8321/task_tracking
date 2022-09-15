@@ -77,13 +77,14 @@ export const isValidTask = (
   if (d1 > d2) return error.date_range_err;
 };
 
-export const isValidUser = (
+export const  isValidUser = (
   req_username: any,
   req_password: any,
   name: any,
   birthday: any,
   email: any
 ) => {
+  
   const isValidUsername = validator.isAlphanumeric(req_username);
   const isValidPassword = validator.isEmpty(req_password);
   const isValidName = validator.isAlpha(name);
@@ -101,7 +102,7 @@ export const isValidLogin = (req_username: any, req_password: any) => {
   const isValidUsername = validator.isAlphanumeric(req_username);
   const isValidPassword = validator.isEmpty(req_password);
 
-  if (!isValidUsername) return error.string_input_err("Username");
+  if (!isValidUsername){ return error.string_input_err("Username");}
   if (isValidPassword) return error.string_input_err("Password");
 };
 

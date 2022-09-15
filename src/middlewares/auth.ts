@@ -1,11 +1,12 @@
 const decode = require("jwt-decode");
-
-import { Request, Response, NextFunction } from "express";
 const jwt = require("jsonwebtoken");
-import { SECRET } from "../controllers/admin_login";
-import { userArray } from "../controllers/users";
+
 import { AppDataSource } from "../data-source";
+import { Request, Response, NextFunction } from "express";
+
+import { SECRET } from "../controllers/admin_login";
 import { User } from "../entity/main";
+
 const userRepo = AppDataSource.getRepository(User);
 
 export const adminAuth = async (
@@ -39,33 +40,27 @@ export const userAuth = async (
   res: Response,
   next: NextFunction
 ) => {
-
-  const allUsers = await userRepo.find();
   const authHeader = req.headers.authorization;
 
   if (authHeader) {
     const token = authHeader.split(" ")[1];
     const decoded = decode(token);
 
-    const userIndex = allUsers.findIndex(
-      (item) => item.id === parseInt(req.params.id)
-    );
+    const user = await userRepo.findOne({
+      where: { username: req.params.username },
+    });
 
-    if (userIndex < 0) {
-      return res.sendStatus(404);
-    } 
-
-    if (allUsers[userIndex].username === decoded.username && allUsers[userIndex].id === decoded.id) {
+    if (user?.username === decoded.username) {
       jwt.verify(token, SECRET, (err: Error) => {
         if (err) {
           return res.sendStatus(403);
         }
       });
-      next();
+      return next();
     } else {
       return res.sendStatus(403);
     }
   } else {
-    res.sendStatus(401);
+    return res.sendStatus(401);
   }
 };

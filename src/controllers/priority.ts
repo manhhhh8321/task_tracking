@@ -1,26 +1,20 @@
-import { IPriority } from "../interfaces/main";
 import { Request, Response } from "express";
-import { Priority } from "../entity/main";
 import { AppDataSource } from "../data-source";
 
-export const priorArray: IPriority[] = [];
+import { Priority } from "../entity/main";
 
 const priorRepo = AppDataSource.getRepository(Priority);
-
 
 const createPrior = async (req: Request, res: Response) => {
   const { name, order } = req.body;
 
-  const allPrior = await priorRepo.find();
+  const priors = await priorRepo.find({ where: { priorName: name } });
 
-  const priorIndex = allPrior.findIndex((item) => item.priorName === name);
-
-  if (priorIndex >= 0) {
+  if (priors.length > 0) {
     return res.status(409).json({
-      error_msg: "Priority existed",
+      error_msg: "Priority name existed",
     });
   }
-
   // Create new priority
   const prior = new Priority();
   prior.priorName = name;
@@ -38,7 +32,6 @@ const createPrior = async (req: Request, res: Response) => {
 };
 
 const viewAllPrior = async (req: Request, res: Response) => {
-
   const allPrior = await priorRepo.find();
 
   if (allPrior.length <= 0) {
@@ -53,11 +46,9 @@ const editPrior = async (req: Request, res: Response) => {
   const { name, order } = req.body;
   const id = req.params.id;
 
-  const allPrior = await priorRepo.find();
+  const prior = await priorRepo.find({ where: { id: parseInt(id) } });
 
-  const index = allPrior.findIndex((item) => item.id === parseInt(id));
-
-  if (index < 0) {
+  if (!prior) {
     return res.status(404).json({
       error_msg: "Cannot find prior id",
     });
@@ -81,20 +72,18 @@ const editPrior = async (req: Request, res: Response) => {
 const setVisiblePrior = async (req: Request, res: Response) => {
   const reqID = req.params.id;
 
-  const priorRepo = AppDataSource.getRepository(Priority);
-  const allPrior = await priorRepo.find();
+  const prior = await priorRepo.findOne({ where: { id: parseInt(reqID) } });
 
-  const index = allPrior.findIndex((item) => item.id === parseInt(reqID));
-
-  if (index < 0) {
+  if (!prior) {
     return res.status(404).json({
       error_msg: "Cannot find prior id",
     });
   }
+
   // Create query builder to update priority visible
   const query = AppDataSource.createQueryBuilder()
     .update(Priority)
-    .set({ visible: !allPrior[index].visible })
+    .set({ visible: !prior.visible })
     .where("id = :id", { id: reqID })
     .execute();
 
@@ -104,6 +93,6 @@ const setVisiblePrior = async (req: Request, res: Response) => {
       error_msg: "Cannot update priority",
     });
   }
-  res.send(`Update priority ${allPrior[index].priorName} successfully`);
+  res.send(`Update priority ${prior.priorName} successfully`);
 };
 export { createPrior, editPrior, viewAllPrior, setVisiblePrior };

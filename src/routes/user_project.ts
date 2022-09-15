@@ -16,35 +16,35 @@ import {
   validateUsernameAndParamsId,
 } from "../middlewares/validations";
 import { userAuth } from "../middlewares/auth";
-import { isValidUserCreateTask } from "../validators/valid";
 const userProjectRouter = express.Router();
 
 userProjectRouter.get("/:id", validateParamId, userAuth, userJoinedProject);
 userProjectRouter.get(
   "/:username/:id",
   validateUsernameAndParamsId,
+  userAuth,
   userDetailProject
 );
 userProjectRouter.get(
   "/:username/:id/task",
   validateUsernameAndParamsId,
+  userAuth,
   allTaskOfUserProject
 );
 userProjectRouter.post(
   "/:username/:id/task",
   validateUsernameAndParamsId,
   validateUserCreateTask,
+  userAuth,
   createTaskForUser
 );
 userProjectRouter.put(
   "/:username/:project_id/:task_id",
   validateProjectIdAndTaskId,
   validateUserCreateTask,
+  userAuth,
   userEditTask
 );
-userProjectRouter.delete(
-  "/:username/:task_id",
-  userDeleteTask
-);
+userProjectRouter.delete("/:username/:task_id", userAuth, userDeleteTask);
 
 export { userProjectRouter };

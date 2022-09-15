@@ -23,6 +23,7 @@ export interface IStatus {
   orderNumber: number;
   currentStatus: string;
   visible: boolean;
+  isDefault: boolean;
 }
 
 export interface IPriority {

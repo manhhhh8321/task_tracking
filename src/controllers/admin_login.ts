@@ -1,5 +1,6 @@
 import { Response, Request, NextFunction } from "express";
 import { AppDataSource } from "../data-source";
+
 import { Admin, User } from "../entity/main";
 
 const bcrypt = require("bcrypt");
@@ -11,26 +12,23 @@ export const SECRET = "SECRET";
 
 const hash = bcrypt.hashSync(passwordStr, saltRounds);
 
-
 const adminRepo = AppDataSource.getRepository(Admin);
 const userRepo = AppDataSource.getRepository(User);
 
 export const createAdmin = async (req: Request, res: Response) => {
   // Delete data from table admin
-
   await adminRepo.clear();
 
   const user = new Admin();
   user.username = "admin";
   user.password = hash;
-  user.role = "admin";
 
   const rs = async () => {
     await AppDataSource.manager.save(user);
     console.log("User has been saved");
   };
   rs();
-  res.send("Created")
+  res.send("Created");
 };
 
 export const userLogin = async (
@@ -40,22 +38,15 @@ export const userLogin = async (
 ) => {
   const { uname, upass } = req.body;
 
-  const allUsers = await userRepo.find();
-  const allAdmins = await adminRepo.find();
+  const user = await userRepo.findOne({ where: { username: uname } });
+  const admin = await adminRepo.findOne({ where: { username: uname } });
 
-  const userIndex = allUsers.findIndex((item) => item.username === uname);
-  const adminIndex = allAdmins.findIndex((item) => item.username === uname);
-
-  if (adminIndex >= 0) {
+  if (admin) {
     const isBycrypted = bcrypt.compareSync(upass, hash);
 
-    const user = allAdmins.find(
-      (item) => item.username === uname && isBycrypted
-    );
-
-    if (user) {
+    if (isBycrypted) {
       const accessToken = jwt.sign(
-        { username: user.username, role: user.role },
+        { username: admin!.username, id: admin.id },
         SECRET
       );
 
@@ -68,15 +59,16 @@ export const userLogin = async (
       });
     }
   } else {
-    if (userIndex >= 0) {
+    if (user) {
       if (
-        uname === allUsers[userIndex].username &&
-        bcrypt.compareSync(upass, allUsers[userIndex].password) &&
-        allUsers[userIndex].active != false
+        uname === user.username &&
+        bcrypt.compareSync(upass, user.password) &&
+        user.active != false
       ) {
         const accessToken = jwt.sign(
-          { username: allUsers[userIndex].username, id: allUsers[userIndex].id },
-          SECRET
+          { username: user.username, id: user.id },
+          SECRET,
+          { expiresIn: "1h" }
         );
         return res.send(accessToken);
       } else {

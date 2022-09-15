@@ -12,13 +12,14 @@ import {
   validateEditUser,
   validateParamId,
 } from "../middlewares/validations";
+import { adminAuth } from "../middlewares/auth";
 const userRouter = express.Router();
 
-userRouter.get("/create-inviteid", createInviteID);
-userRouter.post("/register", validateCreateUser, createUser);
-userRouter.get("/", viewAllUser);
-userRouter.get("/:id", validateParamId, viewUserDetail);
-userRouter.put("/:id", validateParamId, validateEditUser, editUser);
-userRouter.delete("/:id", validateParamId, deleteUser);
+userRouter.get("/create-inviteid",adminAuth, createInviteID);
+userRouter.post("/registers", validateCreateUser, createUser);
+userRouter.get("/", adminAuth, viewAllUser);
+userRouter.get("/:id", validateParamId,adminAuth,  viewUserDetail);
+userRouter.put("/:id", validateParamId, validateEditUser,adminAuth,  editUser);
+userRouter.delete("/:id", validateParamId,adminAuth,  deleteUser);
 
 export { userRouter };

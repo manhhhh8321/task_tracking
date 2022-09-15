@@ -1,17 +1,12 @@
-
 const uniqid = require("uniqid");
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
 
-import { Users } from "../interfaces/main";
 import { Request, Response } from "express";
+
 import { Project, User } from "../entity/main";
 import { AppDataSource } from "../data-source";
 import { Invite } from "../entity/main";
-
-export const userArray: Users[] = [];
-
-export const inviteIdList: string[] = [];
 
 const userRepo = AppDataSource.getRepository(User);
 const inviteRepo = AppDataSource.getRepository(Invite);
@@ -20,12 +15,12 @@ const projectRepo = AppDataSource.getRepository(Project);
 export const createInviteID = async (req: Request, res: Response) => {
   const newId = uniqid();
   const inviteRepo = AppDataSource.getRepository(Invite);
-  const allInvites = await inviteRepo.find();
-  const inviteIndex = allInvites.findIndex((item) => item.id === newId);
 
-  if (inviteIndex >= 0) {
-    return res.status(404).json({
-      error_msg: "Invite ID is existed",
+  const invite = await inviteRepo.findOne({ where: { id: newId } });
+
+  if (invite) {
+    return res.status(409).json({
+      error_msg: "Invite ID already exists",
     });
   }
 
@@ -48,27 +43,37 @@ export const createInviteID = async (req: Request, res: Response) => {
 
 export const createUser = async (req: Request, res: Response) => {
   const { req_username, req_password, req_inviteID, name, birthday, email } =
-    req.body;
+    req.body;    
 
   const hash = bcrypt.hashSync(req_password, saltRounds);
 
-  const allUsers = await userRepo.find();
-  const allInvites = await inviteRepo.find();
-  const allProjects = await projectRepo.find();
+  const user = await userRepo.findOne({ where: { username: req_username } });
+  const invite = await inviteRepo.findOne({ where: { id: req_inviteID } });
+  const em = await userRepo.findOne({ where: { email: email } });
 
-  const index = allUsers.findIndex((item) => item.username === req_username);
+  const allProject = await projectRepo.find();
 
-  if (index >= 0) {
-    return res.status(409).json({
-      error_msg: "User already exists",
+  let defaultProject = allProject[0].projectName;
+
+  if (allProject.length < 0) {
+    defaultProject = "";
+  }
+
+  if (user) {
+    return res.status(412).json({
+      error_msg: "Username already exists",
     });
   }
 
-  const inviteIndex = allInvites.findIndex((item) => item.id === req_inviteID);
+  if (em) {
+    return res.status(412).json({
+      error_msg: "Email already exists",
+    });
+  }
 
-  if (inviteIndex < 0) {
-    return res.status(400).json({
-      error_msg: "InviteID invalid",
+  if (!invite) {
+    return res.status(412).json({
+      error_msg: "Invite ID is not valid",
     });
   }
 
@@ -82,20 +87,18 @@ export const createUser = async (req: Request, res: Response) => {
     newUser.email = email;
     newUser.inviteID = req_inviteID;
     newUser.active = true;
-    newUser.defaultProject = allProjects[0].projectName || "default";
+    newUser.defaultProject = defaultProject;
     newUser.allProjects = [];
     newUser.task = [];
     return newUser;
   };
 
   const newUser = createNewUser();
-  const rs = await userRepo.save(newUser);
-
-  if (!rs) {
-    return res.status(500).json({
-      error_msg: "Cannot create user",
+  await userRepo.save(newUser).catch((err) => {
+    return res.status(412).json({
+      error_msg: "Create user failed",
     });
-  }
+  });
 
   const deleteInvite = await inviteRepo.delete(req_inviteID);
 
@@ -124,18 +127,17 @@ export const viewUserDetail = async (req: Request, res: Response) => {
   const user_id = parseInt(req.params.userid);
 
   const userRepo = AppDataSource.getRepository(User);
-  const allUsers = await userRepo.find();
 
-  if (allUsers.length < 0) {
-    return res.status(204).json({
-      error_msg: "User not exists",
+  const user = await userRepo.findOne({ where: { id: user_id } });
+
+  if (!user) {
+    return res.status(404).json({
+      error_msg: "User not found",
     });
   }
 
-  const userIndex = allUsers.findIndex((item) => item.id === user_id);
-
   res.send(
-    `All user projects : ${allUsers[userIndex].allProjects}\nAll user tasks : ${allUsers[userIndex].task}`
+    `All user projects : ${user.allProjects}\nAll user tasks : ${user.task}`
   );
 };
 
@@ -143,17 +145,10 @@ export const deleteUser = async (req: Request, res: Response) => {
   const user_id = req.params.id;
 
   const userRepo = AppDataSource.getRepository(User);
-  const allUsers = await userRepo.find();
 
-  if (allUsers.length < 0) {
-    return res.status(204).json({
-      error_msg: "Cannot find any user",
-    });
-  }
+  const user = await userRepo.findOne({ where: { id: parseInt(user_id) } });
 
-  const userIndex = allUsers.findIndex((item) => item.id === parseInt(user_id));
-
-  if (userIndex < 0) {
+  if (!user) {
     return res.status(400).json({
       status_code: 0,
       error_msg: "Cannot delete user",
@@ -180,24 +175,17 @@ export const editUser = async (req: Request, res: Response) => {
   const { name, birthday, email, active } = req.body;
 
   const userRepo = AppDataSource.getRepository(User);
-  const allUsers = await userRepo.find();
 
-  if (allUsers.length < 0) {
+  const user = await userRepo.findOne({ where: { id: user_id } });
+
+  if (!user) {
     return res.status(404).json({
-      error_msg: "Cannot find any user",
+      error_msg: "User not found",
     });
   }
-
-  const userIndex = allUsers.findIndex((item) => item.id === user_id);
-  if (userIndex < 0) {
-    return res.status(400).json({
-      error_msg: "Cannot find user",
-    });
-  }
-
   // Create new query builder to update user by id
   const query = userRepo.createQueryBuilder();
-  const rs = await query
+  await query
     .update(User)
     .set({
       name: name,
@@ -206,12 +194,12 @@ export const editUser = async (req: Request, res: Response) => {
       active: active,
     })
     .where("id = :id", { id: user_id })
-    .execute();
-
-  if (!rs) {
-    return res.status(400).json({
-      error_msg: "Cannot update user",
+    .execute()
+    .catch((err) => {
+      return res.status(400).json({
+        error_msg: "Cannot update user",
+      });
     });
-  }
+
   res.send(`Update user ${user_id} successfully`);
 };

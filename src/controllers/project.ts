@@ -1,10 +1,8 @@
-import { Response, Request, NextFunction } from "express";
-import { IProject } from "../interfaces/main";
 import slug from "slug";
-import { Project, Task, User } from "../entity/main";
+import { Response, Request, NextFunction } from "express";
 import { AppDataSource } from "../data-source";
 
-export const projectArray: IProject[] = [];
+import { Project, User } from "../entity/main";
 
 const createProject = async (
   req: Request,
@@ -14,12 +12,9 @@ const createProject = async (
   const { name, start_date, end_date } = req.body;
 
   const projectRepo = AppDataSource.getRepository(Project);
-  const allProjects = await projectRepo.find();
-  const allUsers = await AppDataSource.getRepository(User).find();
+  const project = await projectRepo.findOne({ where: { projectName: name } });
 
-  const index = allProjects.findIndex((item) => item.slug === slug(name));
-
-  if (index >= 0) {
+  if (project) {
     return res.status(409).json({
       error_msg: "Project name existed",
     });
@@ -31,10 +26,13 @@ const createProject = async (
     newProject.slug = slug(name);
     newProject.start_date = start_date;
     newProject.end_date = end_date;
+    newProject.members = [];
+    newProject.task_closed = [];
     return newProject;
   };
 
   const rs = await projectRepo.save(createNewProject());
+
   if (!rs) {
     return res.status(500).json({
       error_msg: "Cannot create project",
@@ -48,6 +46,12 @@ const viewAllProject = async (req: Request, res: Response) => {
   const projectRepo = AppDataSource.getRepository(Project);
   const allProjects = await projectRepo.find({ relations: ["tasks"] });
 
+  if (!allProjects) {
+    return res.status(204).json({
+      error_msg: "No content found",
+    });
+  }
+
   let pushArray = [];
   for (let el of allProjects) {
     const taskAmount = el.tasks.length;
@@ -56,17 +60,13 @@ const viewAllProject = async (req: Request, res: Response) => {
     const obj = {
       projectName: el.projectName,
       taskAmount: taskAmount,
-      process: closedTaskAmount / taskAmount,
+      // check process if taskAmount = 0 => process = 0
+      process: taskAmount === 0 ? 0 : (closedTaskAmount / taskAmount) * 100,
     };
     pushArray.push(obj);
   }
-  if (allProjects.length > 0) {
-    res.json(pushArray);
-  } else {
-    return res.status(204).json({
-      error_msg: "No content found",
-    });
-  }
+
+  res.json(pushArray);
 };
 
 const editProject = async (req: Request, res: Response, next: NextFunction) => {
@@ -74,15 +74,15 @@ const editProject = async (req: Request, res: Response, next: NextFunction) => {
   const slugParams = req.params.slug;
 
   const projectRepo = AppDataSource.getRepository(Project);
-  const allProjects = await projectRepo.find();
 
-  const index = allProjects.findIndex((item) => item.slug === slugParams);
+  const project = await projectRepo.findOne({ where: { slug: slugParams } });
 
-  if (index < 0) {
+  if (!project) {
     return res.status(404).json({
       error_msg: "Cannot find project name",
     });
   }
+
   const rs = await AppDataSource.createQueryBuilder()
     .update(Project)
     .set({
@@ -93,6 +93,7 @@ const editProject = async (req: Request, res: Response, next: NextFunction) => {
     })
     .where("slug = :slug", { slug: slugParams })
     .execute();
+
   if (!rs) {
     return res.status(500).json({
       error_msg: "Cannot update project",
@@ -109,11 +110,9 @@ const deleteProject = async (
   const slugParams = req.params.slug;
 
   const projectRepo = AppDataSource.getRepository(Project);
-  const allProjects = await projectRepo.find();
+  const project = await projectRepo.findOne({ where: { slug: slugParams } });
 
-  let index = allProjects.findIndex((item) => item.slug === slugParams);
-
-  if (index < 0) {
+  if (!project) {
     return res.status(404).json({
       error_msg: "Cannot find project",
     });
@@ -124,6 +123,7 @@ const deleteProject = async (
     .from(Project)
     .where("slug = :slug", { slug: slugParams })
     .execute();
+
   if (!rs) {
     return res.status(500).json({
       error_msg: "Cannot delete project",
@@ -137,47 +137,45 @@ export const addMemberToProject = async (req: Request, res: Response) => {
   const req_slug = req.params.slug;
 
   const projectRepo = AppDataSource.getRepository(Project);
-  const allProject = await projectRepo.find();
   const userRepo = AppDataSource.getRepository(User);
-  const allUsers = await userRepo.find();
 
-  const projectIndex = allProject.findIndex((item) => item.slug === req_slug);
+  const project = await projectRepo.findOne({
+    where: { slug: req_slug },
+    relations: ["users"],
+  });
+  const user = await userRepo.findOne({ where: { username: req_username } });
 
-  // Check if user is already in project
-  const checkExistedUser = allProject[projectIndex].members.findIndex(
-    (item) => item === req_username
-  );
+  const checkUser = await projectRepo.findOne({
+    where: { members: req_username },
+  });
 
-  if (checkExistedUser >= 0) {
+  if (checkUser) {
     return res.status(409).json({
       error_msg: "User already in project",
     });
   }
 
-  const userIndex = allUsers.findIndex(
-    (item) => item.username === req_username
-  );
-  if (userIndex < 0) {
+  if (!user) {
     return res.status(404).json({
       error_msg: "Cannot find user",
     });
   }
 
+  if (!project) {
+    return res.status(404).json({
+      error_msg: "Cannot find project",
+    });
+  }
+
   // Create transaction to add member to project and add project to user project list
   await AppDataSource.transaction(async (transactionalEntityManager) => {
-    const project = await transactionalEntityManager.findOne(Project, {
-      where: { slug: req_slug },
-    });
-    const user = await transactionalEntityManager.findOne(User, {
-      where: { username: req_username },
-    });
+    project.members.push(user.username);
+    user.allProjects.push(project.projectName);
+    project.users.push(user);
 
-    allProject[projectIndex].members.push(user?.username as string);
-    allUsers[userIndex].allProjects.push(project?.projectName as string);
-    
-
-    await transactionalEntityManager.save(Project, allProject[projectIndex]);
-    await transactionalEntityManager.save(User, allUsers[userIndex]);
+    await transactionalEntityManager.save(project);
+    await transactionalEntityManager.save(Project, project);
+    await transactionalEntityManager.save(User, user);
   })
     .then(() => {
       return res.send(
@@ -197,55 +195,51 @@ export const removeMember = async (req: Request, res: Response) => {
   const { req_username } = req.body;
   const req_slug = req.params.slug;
 
-  const allUsers = await AppDataSource.getRepository(User).find();
-  const allProject = await AppDataSource.getRepository(Project).find();
+  const projectRepo = AppDataSource.getRepository(Project);
+  const userRepo = AppDataSource.getRepository(User);
 
-  const projectIndex = allProject.findIndex((item) => item.slug === req_slug);
+  const project = await projectRepo.findOne({
+    where: { slug: req_slug },
+    relations: ["users"],
+  });
+  const user = await userRepo.findOne({ where: { username: req_username } });
+  const checkUser = await projectRepo.findOne({
+    where: { members: req_username },
+  });
 
-  const userIndex = allProject[projectIndex].members.findIndex(
-    (item) => item === req_username
-  );
-
-  if (userIndex < 0) {
-    return res.status(400).json({
-      error_msg: "Member not in project",
-    });
-  }
-
-  const userExist = allUsers.findIndex(
-    (item) => item.username === req_username
-  );
-
-  if (userExist < 0) {
+  if (!user) {
     return res.status(404).json({
       error_msg: "Cannot find user",
     });
   }
 
+  if (!project) {
+    return res.status(404).json({
+      error_msg: "Cannot find project",
+    });
+  }
+
+  if (!checkUser) {
+    return res.status(400).json({
+      error_msg: "Member not in project",
+    });
+  }
+
   await AppDataSource.transaction(async (transactionalEntityManager) => {
-    const project = await transactionalEntityManager.findOne(Project, {
-      where: { slug: req_slug },
-    });
+    const userIndex = project!.members.indexOf(req_username);
 
-    const user = await transactionalEntityManager.findOne(User, {
-      where: { username: req_username },
-    });
+    project.members.splice(userIndex, 1);
 
-    if (!user) {
-      return res.status(404).json({
-        error_msg: "Cannot find user",
-      });
-    }
-
-    allProject[projectIndex].members.splice(userIndex, 1);
-
-    allUsers[userExist].allProjects.splice(
-      allUsers[userExist].allProjects.indexOf(project?.projectName as string),
+    user.allProjects.splice(
+      user.allProjects.indexOf(project?.projectName as string),
       1
     );
+    await transactionalEntityManager.save(Project, project);
+    await transactionalEntityManager.save(User, user);
+    // Create query builder to delete user from project
+    project.users = project.users.filter((el) => el.id !== user.id);
 
-    await transactionalEntityManager.save(Project, allProject[projectIndex]);
-    await transactionalEntityManager.save(User, allUsers[userExist]);
+    await transactionalEntityManager.save(Project, project);
   })
     .then(() => {
       return res.send(

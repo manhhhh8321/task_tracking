@@ -35,12 +35,12 @@ app.use("/priority", adminAuth, priorityRouter);
 //Manage tasks
 app.use("/task", adminAuth, taskRouter);
 //Manage users
-app.use("/user", adminAuth, userRouter);
+app.use("/user", userRouter);
 
 //Users_project
 app.use("/projects", userProjectRouter);
 //User_task_actions
-app.use("/", adminAuth, userPrivateTaskRouter);
+app.use("/", userPrivateTaskRouter);
 
 const PORT = 3000;
 app.listen(PORT, () => {
