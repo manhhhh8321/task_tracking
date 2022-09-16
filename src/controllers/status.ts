@@ -35,9 +35,13 @@ const createStatus = async (req: Request, res: Response) => {
 
 const viewAllStatus = async (req: Request, res: Response) => {
   const statusRepo = AppDataSource.getRepository(Status);
-  const allStatus = await statusRepo.find();
+  const allStatus = await statusRepo.find({
+    order: {
+      orderNumber: "ASC",
+    },
+  });
 
-  if (allStatus.length <= 0) {
+  if (allStatus.length === 0) {
     return res.status(204).json({
       error_msg: "No content found",
     });

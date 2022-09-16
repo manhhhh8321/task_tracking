@@ -137,7 +137,7 @@ export const userEditPrivateTask = async (req: Request, res: Response) => {
 
   // Check if user is in the project
 
-  if (!project.users.includes(user!)) {
+  if (!user?.allProjects.includes(project.projectName)) {
     return res.status(400).json({
       error_msg: "User is not in the project",
     });

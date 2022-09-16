@@ -63,6 +63,7 @@ const createTask = async (req: Request, res: Response) => {
   task.end_date = req_end_date;
   task.project = project;
   task.type = type!;
+  
   if (!status) {
     task.status = defaultStatuses!;
   } else {
